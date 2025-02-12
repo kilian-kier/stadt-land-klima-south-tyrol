@@ -1,4 +1,4 @@
-<template lang="">
+<template>
   <div class="flex w-full justify-center">
     <div class="relative flex h-96 w-full items-center justify-center">
       <div class="relative flex h-96 w-full items-center justify-center">
@@ -30,11 +30,13 @@ import {
   ArcElement,
   RadialLinearScale,
 } from "chart.js";
+
 class CustomRadialLinearScale extends RadialLinearScale {
   draw() {
     super.draw();
   }
 }
+
 CustomRadialLinearScale.id = "customRadialLinear";
 Chart.register(CategoryScale, LinearScale, CustomRadialLinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
@@ -113,7 +115,7 @@ const chartOptions = {
 };
 
 function createSubScoreArray(subScoreObject) {
-  let scoresArray = [];
+  const scoresArray = [];
   scoresArray.push(subScoreObject.score_energy);
   scoresArray.push(subScoreObject.score_transport);
   scoresArray.push(subScoreObject.score_ann);
@@ -122,9 +124,11 @@ function createSubScoreArray(subScoreObject) {
   scoresArray.push(subScoreObject.score_cpma);
   return scoresArray.map((value) => Math.round(Number(value) * 10) / 10);
 }
+
 function scaleToArea(scoresArray) {
   return scoresArray.map((value) => Math.sqrt(value / 100) * 100);
 }
+
 function createColorArray(subScoresArray) {
   const tempColorsArray = [];
   subScoresArray.forEach(function (score, index) {

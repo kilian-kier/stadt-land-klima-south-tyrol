@@ -1,20 +1,19 @@
 <template>
   <div class="py-4">
-    
-    <h3 class="mb-3 text-h3 font-heading text-light-blue">
+    <h3 class="mb-3 font-heading text-h3 text-light-blue">
       {{ $t("measure.description_about_heading") }}
     </h3>
 
     <div v-if="measure.description_about" class="mb-2 flex flex-row items-start gap-4">
       <figure class="mt-0 flex shrink-0 flex-col">
         <img src="~/assets/icons/icon_info.svg" alt="" class="h-auto w-10 opacity-50" />
-      </figure>     
+      </figure>
       <div class="has-long-links prose" v-html="sanitizeHtml(measure.description_about)" />
     </div>
   </div>
 
   <div v-if="measure.description_evaluation_criteria" class="py-4">
-    <h3 class="mb-3 text-h3 font-heading text-light-blue">
+    <h3 class="mb-3 font-heading text-h3 text-light-blue">
       {{ $t("measure.evaluation_criteria_heading") }}
     </h3>
 
@@ -28,7 +27,7 @@
   </div>
 
   <div class="py-4">
-    <h3 class="mb-3 text-h3 font-heading text-light-blue">
+    <h3 class="mb-3 font-heading text-h3 text-light-blue">
       {{ $t("measure.feasibility_heading") }}
     </h3>
 
@@ -62,6 +61,7 @@
 <script setup>
 import { defineProps } from "vue";
 import sanitizeHtml from "sanitize-html";
+
 const { $t, $locale } = useNuxtApp();
 const props = defineProps({
   measure: {

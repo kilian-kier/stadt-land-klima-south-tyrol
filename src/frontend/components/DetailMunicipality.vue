@@ -1,4 +1,4 @@
-<template lang="">
+<template>
   <div class="w-full flex-col justify-center">
     <div class="mb-8">
       <item-ranking :municipality="municipality" />
@@ -15,7 +15,7 @@
 
     <!-- Accordion -->
     <!-- Municipality description -->
-    <div class="collapse-plus collapse rounded-sm p-2 px-0 shadow-list md:px-2">
+    <div class="collapse collapse-plus rounded-sm p-2 px-0 shadow-list md:px-2">
       <input type="checkbox" name="sectors-accordion" checked="checked" autocomplete="off" />
 
       <div class="collapse-title flex items-end gap-4 px-2 md:px-4">
@@ -65,15 +65,16 @@
 
         <!-- List of individual measure ratings for the given sector -->
         <ul class="mb-8 divide-y-2 divide-slate-300">
-          <li
-            v-for="item in sectorRatings"
-            :key="item.id"
-          >
+          <li v-for="item in sectorRatings" :key="item.id">
             <div class="collapse-plus collapse rounded-none">
-              <input type="checkbox" :name="`rating-${item.id}-accordion`" autocomplete="off"/>
+              <input type="checkbox" :name="`rating-${item.id}-accordion`" autocomplete="off" />
 
               <div
-              :class="[ratingColor[ratingIndex(item.rating)], ratingHeaderOpacity[ratingIndex(item.rating)], 'collapse-title flex items-center justify-stretch gap-3 p-3 px-2 pr-6 md:px-4']"
+                :class="[
+                  ratingColor[ratingIndex(item.rating)],
+                  ratingHeaderOpacity[ratingIndex(item.rating)],
+                  'collapse-title flex items-center justify-stretch gap-3 p-3 px-2 pr-6 md:px-4',
+                ]"
               >
                 <div class="shrink-0">
                   <img :src="ratingImages[ratingIndex(item.rating)]" class="my-auto h-auto w-5" />
@@ -85,8 +86,12 @@
               </div>
 
               <!-- More info on the measure when clicked -->
-              <div 
-              :class="[ratingColor[ratingIndex(item.rating)], ratingTextOpacity[ratingIndex(item.rating)], 'collapse-content md:px-12 lg:px-12']"
+              <div
+                :class="[
+                  ratingColor[ratingIndex(item.rating)],
+                  ratingTextOpacity[ratingIndex(item.rating)],
+                  'collapse-content md:px-12 lg:px-12',
+                ]"
               >
                 <MeasureDetails :measure="item.measure" />
                 <div v-if="item.current_progress" class="mb-4">
@@ -109,13 +114,13 @@
                 </dl>
 
                 <div class="mt-8">
-                  <NuxtLink
+                  <NuxtLinkLocale
                     :to="`/measures/sectors/${sector}#measure-${item.measure.slug}`"
                     class="text-light-blue underline"
                     target="measure"
                   >
                     {{ $t("municipality_rating.link_to_measure") }} ↗
-                  </NuxtLink>
+                  </NuxtLinkLocale>
                 </div>
               </div>
             </div>
@@ -165,10 +170,12 @@
 import lodash from "lodash";
 import sanitizeHtml from "sanitize-html";
 import linkifyStr from "linkify-string";
+
 const { range } = lodash;
 import sectorImages from "../shared/sectorImages.js";
 import ratingImages from "../shared/ratingImages.js";
 import { ratingColor, ratingTextOpacity, ratingHeaderOpacity } from "../shared/ratingColors.js";
+
 const { $t, $locale } = useNuxtApp();
 const props = defineProps({
   municipality: {
@@ -206,6 +213,7 @@ function createSubScoreObject(municipality) {
   }
   return temp;
 }
+
 function ratingIndex(value) {
   const tempVal = Number(value);
   if (tempVal === 0) return 0;
@@ -214,4 +222,4 @@ function ratingIndex(value) {
   return 3;
 }
 </script>
-<style lang=""></style>
+<style></style>

@@ -1,4 +1,4 @@
-<template lang="">
+<template>
   <div class="h-full w-full">
     <svg
       version="1.1"
@@ -1165,15 +1165,19 @@
 .st0 {
   fill: #ededed;
 }
+
 .st1 {
   font-family: "RobotoCondensed-Regular";
 }
+
 .st2 {
   font-size: 12px;
 }
+
 .st3 {
   fill: #ffffff;
 }
+
 .st4 {
   fill-rule: evenodd;
   clip-rule: evenodd;

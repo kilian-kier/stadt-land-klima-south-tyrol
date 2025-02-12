@@ -1,5 +1,5 @@
-<template lang="">
+<template>
   <div>Karte</div>
 </template>
 <script setup></script>
-<style lang=""></style>
+<style></style>

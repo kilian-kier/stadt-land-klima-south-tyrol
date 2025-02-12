@@ -33,7 +33,7 @@ meta:
       translation: Menüs
   validation: null
   validation_message: null
-  width: half
+  width: full
 schema:
   name: menus
   table: pages

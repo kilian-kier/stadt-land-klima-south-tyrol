@@ -3,18 +3,18 @@
     <waving-banner v-if="directusData.municipalities[0].status === 'draft'">
       {{ $t("municipalities.preview_text") }}
     </waving-banner>
-    <NuxtLink :to="`/municipalities`" class="font-heading text-h4 text-light-blue">
+    <NuxtLinkLocale :to="`/municipalities`" class="font-heading text-h4 text-light-blue">
       ← {{ $t("municipality.back_label") }}
-    </NuxtLink>
+    </NuxtLinkLocale>
     <article class="mb-8 mt-10">
       <detail-municipality
         :municipality="directusData.municipalities[0]"
         :sorted-ratings="sortMeasuresBySectorDict"
       ></detail-municipality>
     </article>
-    <NuxtLink :to="`/municipalities`" class="font-heading text-h4 text-light-blue">
+    <NuxtLinkLocale :to="`/municipalities`" class="font-heading text-h4 text-light-blue">
       ← {{ $t("municipality.back_label") }}
-    </NuxtLink>
+    </NuxtLinkLocale>
   </div>
 </template>
 <script setup>

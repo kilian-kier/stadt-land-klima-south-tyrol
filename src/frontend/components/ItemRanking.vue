@@ -1,4 +1,4 @@
-<template lang="">
+<template>
   <div
     class="relative mb-3 flex items-stretch gap-4 bg-opacity-10 py-5 pl-10 pr-4"
     :class="[isRanking ? 'shadow-list' : '', colorClass.bg]"
@@ -63,4 +63,4 @@ const props = defineProps({
 const municipality = props.municipality;
 const scoreTotalRounded = Math.round(Number(municipality.score_total) * 10) / 10;
 </script>
-<style lang=""></style>
+<style></style>

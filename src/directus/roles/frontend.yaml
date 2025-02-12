@@ -41,11 +41,10 @@ permissions:
     presets: null
     fields:
       - id
-      - name
       - menus
-      - contents
       - slug
       - sort
+      - translations
   - collection: municipalities
     action: read
     permissions: null
@@ -113,6 +112,25 @@ permissions:
   - collection: directus_translations
     action: read
     permissions: {}
+    validation: {}
+    presets: null
+    fields:
+      - "*"
+  - collection: pages_translations
+    action: read
+    permissions: null
+    validation: null
+    presets: null
+    fields:
+      - languages_code
+      - contents
+      - name
+  - collection: languages
+    action: read
+    permissions:
+      _and:
+        - status:
+            _eq: published
     validation: {}
     presets: null
     fields:

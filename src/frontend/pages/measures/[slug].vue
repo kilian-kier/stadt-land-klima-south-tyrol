@@ -1,8 +1,8 @@
 <template>
   <div>
-    <NuxtLink :to="`/measures/sectors/${measure.sector}`" class="font-heading text-h4 text-light-blue">
+    <NuxtLinkLocale :to="`/measures/sectors/${measure.sector}`" class="font-heading text-h4 text-light-blue">
       {{ $t("measure.back_label", { ":sector": $t(`measure_sectors.${measure.sector}.title`) }) }}
-    </NuxtLink>
+    </NuxtLinkLocale>
 
     <article class="mb-8 mt-10 flex items-start gap-4">
       <div class="prose">

@@ -8,7 +8,7 @@
     </div>
     <ul>
       <li v-for="sector in sectors" :key="sector" class="mb-4">
-        <NuxtLink :to="`/measures/sectors/${sector}`" class="card card-compact shadow">
+        <NuxtLinkLocale :to="`/measures/sectors/${sector}`" class="card card-compact shadow">
           <div class="card-body">
             <div class="flex items-start gap-4">
               <img :src="sectorImages[sector]" alt="" class="h-auto w-24 opacity-50" />
@@ -19,7 +19,7 @@
               </div>
             </div>
           </div>
-        </NuxtLink>
+        </NuxtLinkLocale>
       </li>
     </ul>
   </div>

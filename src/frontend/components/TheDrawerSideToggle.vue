@@ -1,5 +1,5 @@
-<template lang="">
-  <div class="fixed right-0 top-0 z-10 flex-none">
+<template>
+  <div class="fixed right-0 top-0 z-10 flex-none shadow-lg">
     <label
       id="page-drawer-toggle"
       for="page-drawer"
@@ -17,4 +17,4 @@
   </div>
 </template>
 <script setup></script>
-<style lang=""></style>
+<style></style>

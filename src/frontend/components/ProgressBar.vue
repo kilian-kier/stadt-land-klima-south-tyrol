@@ -1,4 +1,4 @@
-<template lang="">
+<template>
   <div class="flex flex-col">
     <div
       :class="['relative w-full border', colorClass.border, layout === 'compact' ? 'h-4 rounded-sm' : 'h-8 rounded-md']"
@@ -26,6 +26,7 @@
 </template>
 <script setup>
 import { computed, ref, onMounted } from "vue";
+
 const props = defineProps({
   scoreTotal: {
     type: Number,
@@ -106,4 +107,4 @@ onMounted(() => {
   }, 100);
 });
 </script>
-<style lang=""></style>
+<style></style>

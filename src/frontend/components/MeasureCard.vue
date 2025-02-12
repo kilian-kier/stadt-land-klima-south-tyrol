@@ -5,9 +5,7 @@
         {{ measure.name }}
       </h2>
 
-      <div>
-        ID: {{ measure.measure_id }}
-      </div>
+      <div>ID: {{ measure.measure_id }}</div>
 
       <div class="divide-y-2 divide-light-blue md:px-1 lg:px-2">
         <MeasureDetails :measure="measure" />
@@ -24,6 +22,7 @@
 import { defineProps } from "vue";
 import MeasureDetails from "./MeasureDetails.vue";
 import MeasureDescriptions from "./MeasureDescriptions.vue";
+
 const { $t, $locale } = useNuxtApp();
 const props = defineProps({
   measure: {
