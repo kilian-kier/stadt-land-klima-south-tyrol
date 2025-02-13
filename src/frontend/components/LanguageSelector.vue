@@ -23,7 +23,7 @@
         <div
           v-for="lang in availableLanguages"
           :key="lang.code"
-          class="hover:bg-gray-100 flex cursor-pointer items-center space-x-2 p-2 text-white"
+          class="hover:bg-gray-100 flex cursor-pointer select-none items-center space-x-2 p-2 text-white"
           @click="switchLanguage(lang)"
         >
           <img :src="lang.flag" :alt="lang.code" class="h-4 w-6 rounded" />
