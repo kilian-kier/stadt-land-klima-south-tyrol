@@ -1,0 +1,3 @@
+key: measures_sector.count_measures_in_sector
+language: it-IT
+value: 'Numero di misure nel settore dell''energia: :count'
