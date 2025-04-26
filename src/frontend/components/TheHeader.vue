@@ -2,7 +2,7 @@
   <header class="mb-3 bg-white px-2 py-4 shadow">
     <div class="mx-auto flex w-full max-w-screen-xl flex-col items-center gap-x-8 lg:flex-row lg:items-end">
       <NuxtLinkLocale to="/">
-        <img src="~/assets/images/Stadt-Land-Klima-Logo-Beta.svg" class="h-32 w-auto" :alt="t('logo.alt')" />
+        <img src="~/assets/images/Stadt-Land-Klima-Logo-de_DE.svg" class="h-32 w-auto" :alt="t('logo.alt')" />
       </NuxtLinkLocale>
       <form class="relative mb-1 overflow-visible" action="javascript:;">
         <div class="form-control">
