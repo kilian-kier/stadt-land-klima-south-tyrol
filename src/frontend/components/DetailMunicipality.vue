@@ -172,9 +172,9 @@ import sanitizeHtml from "sanitize-html";
 import linkifyStr from "linkify-string";
 
 const { range } = lodash;
-import sectorImages from "../shared/sectorImages.js";
-import ratingImages from "../shared/ratingImages.js";
-import { ratingColor, ratingTextOpacity, ratingHeaderOpacity } from "../shared/ratingColors.js";
+import sectorImages from "~/shared/sectorImages.js";
+import ratingImages from "~/shared/ratingImages.js";
+import { ratingColor, ratingTextOpacity, ratingHeaderOpacity } from "~/shared/ratingColors.js";
 
 const { $t, $locale } = useNuxtApp();
 const props = defineProps({
