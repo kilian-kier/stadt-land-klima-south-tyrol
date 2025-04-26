@@ -33,6 +33,10 @@ export default defineNuxtConfig({
         code: "it-IT",
       },
     ],
+    ignorePaths: [
+      '/backend',
+      '/backend/**',
+    ],
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: "i18n_redirected",

@@ -1,4 +1,4 @@
-FROM directus/directus:10
+FROM directus/directus:10@sha256:44c3242d5e3f46edbc07571e38d340d67dccdf95bc55fafd3abb0a2720b978a3
 ARG UID=1000
 ARG GID=1000
 

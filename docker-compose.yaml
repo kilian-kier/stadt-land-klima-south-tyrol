@@ -1,6 +1,7 @@
 services:
   db:
-    image: postgis/postgis:13-3.1-alpine
+    image: imresamu/postgis-arm64
+    platform: linux/arm64/v8
     env_file: ./docker/db/.env
     volumes:
       - ./docker/data/db:/var/lib/postgresql/data
@@ -13,6 +14,7 @@ services:
 
   cache:
     image: redis:6
+    platform: linux/arm64/v8
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -57,3 +59,44 @@ services:
     env_file: ./src/frontend/.env
     depends_on:
     - directus
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    platform: linux/arm64/v8
+    ports:
+      - 9443:9443
+    volumes:
+      - ./docker/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/certbot/www:/var/www/certbot:ro
+      - ./docker/certbot/conf:/etc/letsencrypt:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - frontend
+      - directus
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./docker/certbot/www:/var/www/certbot
+      - ./docker/certbot/conf:/etc/letsencrypt
+    depends_on:
+      - nginx
+    entrypoint: >
+      sh -c "
+        if [ ! -d '/etc/letsencrypt/live/test.stadt-land-klima-bz.ydns.eu' ]; then
+          certbot certonly --webroot --staging -w /var/www/certbot \
+            -d test.stadt-land-klima-bz.ydns.eu \
+            -m kierkilian@gmail.com --agree-tos --non-interactive
+        fi
+        while :; do certbot renew; sleep 12h; done
+      "
+
