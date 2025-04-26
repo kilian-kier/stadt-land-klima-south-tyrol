@@ -1,39 +1,37 @@
-collection: municipalities
-field: overall_status_comment
-type: text
+collection: articles
+field: image_credits
+type: string
 meta:
-  collection: municipalities
+  collection: articles
   conditions: null
   display: null
   display_options: null
-  field: overall_status_comment
-  group: null
+  field: image_credits
+  group: content
   hidden: false
-  interface: input-multiline
+  interface: input
   note: null
   options:
-    placeholder: $t:municipalities.overall_status_comment
-    softLength: 500
     trim: true
   readonly: false
-  required: false
-  sort: 7
+  required: true
+  sort: 3
   special: null
   translations:
     - language: de-DE
-      translation: Anmerkungen & Aktuelles zur Bewertung
+      translation: Bildunterschrift & Copyright
   validation: null
   validation_message: null
   width: full
 schema:
-  name: overall_status_comment
-  table: municipalities
-  data_type: text
+  name: image_credits
+  table: articles
+  data_type: character varying
   default_value: null
-  max_length: null
+  max_length: 255
   numeric_precision: null
   numeric_scale: null
-  is_nullable: true
+  is_nullable: false
   is_unique: false
   is_primary_key: false
   is_generated: false

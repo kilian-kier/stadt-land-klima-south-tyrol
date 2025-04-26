@@ -1,38 +1,37 @@
 collection: municipalities
-field: overall_status_comment
-type: text
+field: percentage_rated
+type: decimal
 meta:
   collection: municipalities
   conditions: null
   display: null
   display_options: null
-  field: overall_status_comment
+  field: percentage_rated
   group: null
   hidden: false
-  interface: input-multiline
+  interface: input
   note: null
   options:
-    placeholder: $t:municipalities.overall_status_comment
-    softLength: 500
-    trim: true
-  readonly: false
+    placeholder: null
+    step: null
+  readonly: true
   required: false
-  sort: 7
+  sort: 14
   special: null
   translations:
     - language: de-DE
-      translation: Anmerkungen & Aktuelles zur Bewertung
+      translation: Prozentzahl der bewerteten Maßnahmen
   validation: null
   validation_message: null
   width: full
 schema:
-  name: overall_status_comment
+  name: percentage_rated
   table: municipalities
-  data_type: text
+  data_type: numeric
   default_value: null
   max_length: null
-  numeric_precision: null
-  numeric_scale: null
+  numeric_precision: 10
+  numeric_scale: 2
   is_nullable: true
   is_unique: false
   is_primary_key: false

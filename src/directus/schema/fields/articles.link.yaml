@@ -1,36 +1,35 @@
-collection: municipalities
-field: overall_status_comment
-type: text
+collection: articles
+field: link
+type: string
 meta:
-  collection: municipalities
+  collection: articles
   conditions: null
   display: null
   display_options: null
-  field: overall_status_comment
+  field: link
   group: null
   hidden: false
-  interface: input-multiline
+  interface: input
   note: null
   options:
-    placeholder: $t:municipalities.overall_status_comment
-    softLength: 500
-    trim: true
+    placeholder: $t:article.link
   readonly: false
   required: false
-  sort: 7
+  sort: 14
   special: null
-  translations:
-    - language: de-DE
-      translation: Anmerkungen & Aktuelles zur Bewertung
-  validation: null
+  translations: null
+  validation:
+    _and:
+      - link:
+          _regex: ^(https?:\/\/)?([\w-]+(\.[\w-]+)+)(\/[\w.,@?^=%&:/~+#-]*)?$
   validation_message: null
   width: full
 schema:
-  name: overall_status_comment
-  table: municipalities
-  data_type: text
+  name: link
+  table: articles
+  data_type: character varying
   default_value: null
-  max_length: null
+  max_length: 255
   numeric_precision: null
   numeric_scale: null
   is_nullable: true

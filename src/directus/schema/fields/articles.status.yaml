@@ -1,38 +1,27 @@
-collection: municipalities
+collection: articles
 field: status
 type: string
 meta:
-  collection: municipalities
-  conditions:
-    - name: AllowPublishIFRatingsAreDone
-      rule:
-        _and:
-          - status:
-              _eq: draft
-          - _or:
-              - percentage_rated:
-                  _null: true
-              - percentage_rated:
-                  _lt: "95"
-      readonly: true
-      options:
-        allowOther: false
-        allowNone: false
+  collection: articles
+  conditions: null
   display: labels
   display_options:
     choices:
-      - text: $t:published
+      - background: var(--theme--primary-background)
+        color: var(--theme--primary)
+        foreground: var(--theme--primary)
+        text: $t:published
         value: published
-        foreground: "#FFFFFF"
-        background: "#26A269"
-      - text: $t:draft
+      - background: var(--theme--background-normal)
+        color: var(--theme--foreground)
+        foreground: var(--theme--foreground)
+        text: $t:draft
         value: draft
-        foreground: "#18222F"
-        background: "#E01B24"
-      - text: $t:archived
+      - background: var(--theme--warning-background)
+        color: var(--theme--warning)
+        foreground: var(--theme--warning)
+        text: $t:archived
         value: archived
-        foreground: "#FFFFFF"
-        background: var(--warning)
     showAsDot: true
   field: status
   group: null
@@ -41,13 +30,18 @@ meta:
   note: null
   options:
     choices:
-      - text: $t:published
+      - color: var(--theme--primary)
+        text: $t:published
         value: published
-      - text: $t:draft
+      - color: var(--theme--foreground)
+        text: $t:draft
         value: draft
+      - color: var(--theme--warning)
+        text: $t:archived
+        value: archived
   readonly: false
   required: false
-  sort: 1
+  sort: 2
   special: null
   translations: null
   validation: null
@@ -55,7 +49,7 @@ meta:
   width: full
 schema:
   name: status
-  table: municipalities
+  table: articles
   data_type: character varying
   default_value: draft
   max_length: 255

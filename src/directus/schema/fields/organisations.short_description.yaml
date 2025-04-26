@@ -1,33 +1,31 @@
-collection: municipalities
-field: overall_status_comment
+collection: organisations
+field: short_description
 type: text
 meta:
-  collection: municipalities
+  collection: organisations
   conditions: null
   display: null
   display_options: null
-  field: overall_status_comment
+  field: short_description
   group: null
   hidden: false
   interface: input-multiline
   note: null
   options:
-    placeholder: $t:municipalities.overall_status_comment
     softLength: 500
-    trim: true
   readonly: false
   required: false
-  sort: 7
+  sort: 8
   special: null
   translations:
     - language: de-DE
-      translation: Anmerkungen & Aktuelles zur Bewertung
+      translation: Kurzbeschreibung
   validation: null
   validation_message: null
   width: full
 schema:
-  name: overall_status_comment
-  table: municipalities
+  name: short_description
+  table: organisations
   data_type: text
   default_value: null
   max_length: null
