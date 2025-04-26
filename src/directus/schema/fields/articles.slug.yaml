@@ -1,39 +1,37 @@
-collection: municipalities
-field: overall_status_comment
-type: text
+collection: articles
+field: slug
+type: string
 meta:
-  collection: municipalities
+  collection: articles
   conditions: null
   display: null
   display_options: null
-  field: overall_status_comment
+  field: slug
   group: null
   hidden: false
-  interface: input-multiline
+  interface: input
   note: null
   options:
-    placeholder: $t:municipalities.overall_status_comment
-    softLength: 500
-    trim: true
+    slug: true
   readonly: false
-  required: false
-  sort: 7
+  required: true
+  sort: 4
   special: null
   translations:
     - language: de-DE
-      translation: Anmerkungen & Aktuelles zur Bewertung
+      translation: Slug (URL des Artikels)
   validation: null
   validation_message: null
   width: full
 schema:
-  name: overall_status_comment
-  table: municipalities
-  data_type: text
+  name: slug
+  table: articles
+  data_type: character varying
   default_value: null
-  max_length: null
+  max_length: 255
   numeric_precision: null
   numeric_scale: null
-  is_nullable: true
+  is_nullable: false
   is_unique: false
   is_primary_key: false
   is_generated: false

@@ -1,37 +1,35 @@
-collection: municipalities
-field: percantage_rated
-type: decimal
+collection: organisations
+field: link
+type: string
 meta:
-  collection: municipalities
+  collection: organisations
   conditions: null
   display: null
   display_options: null
-  field: percantage_rated
+  field: link
   group: null
   hidden: false
   interface: input
   note: null
-  options:
-    placeholder: null
-    step: null
-  readonly: true
-  required: false
-  sort: 14
+  options: null
+  readonly: false
+  required: true
+  sort: 9
   special: null
   translations:
     - language: de-DE
-      translation: Prozentzahl der bewerteten Maßnahmen
+      translation: Link
   validation: null
   validation_message: null
   width: full
 schema:
-  name: percantage_rated
-  table: municipalities
-  data_type: numeric
+  name: link
+  table: organisations
+  data_type: character varying
   default_value: null
-  max_length: null
-  numeric_precision: 10
-  numeric_scale: 2
+  max_length: 255
+  numeric_precision: null
+  numeric_scale: null
   is_nullable: true
   is_unique: false
   is_primary_key: false

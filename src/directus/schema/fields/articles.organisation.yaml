@@ -1,34 +1,32 @@
-collection: municipalities
-field: overall_status_comment
-type: text
+collection: articles
+field: organisation
+type: json
 meta:
-  collection: municipalities
+  collection: articles
   conditions: null
   display: null
   display_options: null
-  field: overall_status_comment
+  field: organisation
   group: null
   hidden: false
-  interface: input-multiline
+  interface: collection-item-dropdown
   note: null
   options:
-    placeholder: $t:municipalities.overall_status_comment
-    softLength: 500
-    trim: true
+    selectedCollection: organisations
+    template: "{{name}}"
   readonly: false
   required: false
-  sort: 7
-  special: null
-  translations:
-    - language: de-DE
-      translation: Anmerkungen & Aktuelles zur Bewertung
+  sort: 13
+  special:
+    - cast-json
+  translations: null
   validation: null
   validation_message: null
   width: full
 schema:
-  name: overall_status_comment
-  table: municipalities
-  data_type: text
+  name: organisation
+  table: articles
+  data_type: json
   default_value: null
   max_length: null
   numeric_precision: null
