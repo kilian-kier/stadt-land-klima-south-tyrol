@@ -39,7 +39,7 @@ const backendUrl = ref("#");
 onMounted(() => {
   try {
     const protocol = window.location.protocol;
-    backendUrl.value = `${protocol}//backend/` + window.location.host;
+    backendUrl.value = `${protocol}//backend.` + window.location.host;
   } catch (error) {
     console.error("Error preparing backend URL:", error);
   }
