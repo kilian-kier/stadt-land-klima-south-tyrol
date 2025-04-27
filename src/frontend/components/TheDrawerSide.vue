@@ -23,7 +23,7 @@
         </NuxtLinkLocale>
       </li>
       <li>
-        <a href="/backend" class="text-md btn btn-ghost normal-case text-black" @click="closeDrawer"> Login </a>
+        <a :href="backendUrl" class="text-md btn btn-ghost normal-case text-black" @click="closeDrawer"> Login </a>
       </li>
     </ul>
   </nav>
@@ -33,6 +33,17 @@ import { defineProps } from "vue";
 
 const { t } = useI18n();
 const props = defineProps(["pages"]);
+
+const backendUrl = ref("#");
+
+onMounted(() => {
+  try {
+    const protocol = window.location.protocol;
+    backendUrl.value = `${protocol}//backend.` + window.location.host;
+  } catch (error) {
+    console.error("Error preparing backend URL:", error);
+  }
+});
 
 function closeDrawer() {
   document.getElementById("page-drawer-toggle").click();
