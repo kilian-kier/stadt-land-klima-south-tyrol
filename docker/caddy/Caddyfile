@@ -1,0 +1,32 @@
+test.stadt-land-klima-bz.ydns.eu {
+    tls kierkilian@gmail.com {
+        ca https://acme.zerossl.com/v2/DV90
+    }
+    encode gzip
+
+    handle {
+        reverse_proxy frontend:3000 {
+            header_up Host            {host}
+            header_up X-Real-IP       {remote}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
+backend.test.stadt-land-klima-bz.ydns.eu {
+    tls kierkilian@gmail.com {
+        ca https://acme.zerossl.com/v2/DV90
+    }
+    encode gzip
+
+    handle {
+        reverse_proxy directus:8055 {
+            header_up Host            {host}
+            header_up X-Real-IP       {remote}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
