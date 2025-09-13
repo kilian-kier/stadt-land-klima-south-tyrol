@@ -14,7 +14,8 @@
     "lintExtensions:js": "eslint --ext \".js\" --ignore-path .gitignore ../../directus-extension-not-build/**",
     "lintExtensions:prettier": "prettier --check ../../directus-extension-not-build/**",
     "lintExtensions": "npm run lintExtensions:js && npm run lintExtensions:prettier",
-    "lintfixExtensions": "prettier --write --list-different ../../directus-extension-not-build/** && npm run lintExtensions:js --fix"
+    "lintfixExtensions": "prettier --write --list-different ../../directus-extension-not-build/** && npm run lintExtensions:js --fix",
+    "test": "jest"
   },
   "devDependencies": {
     "@nuxt/devtools": "latest",
@@ -23,6 +24,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-vue": "^9.17.0",
+    "jest": "^30.1.3",
     "nuxt": "^3.7.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.4"
