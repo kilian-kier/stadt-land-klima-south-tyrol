@@ -9,7 +9,7 @@ COPY start_prod.sh /start_prod.sh
 RUN ln -s /directus/cli/index.mjs /directus/directus-cli
 
 USER root
-RUN apk add bash shadow
+RUN apk update && apk add bash shadow
 
 RUN groupmod -g "${GID}" node && usermod -u "${UID}" -g "${GID}" node
 

@@ -26,7 +26,7 @@
   </p>
 </template>
 <script setup>
-import sectorImages from "../../shared/sectorImages.js";
+import sectorImages from "~/shared/sectorImages.js";
 import { watch } from "vue";
 const { $directus, $readItems } = useNuxtApp();
 const { t, locale } = useI18n();

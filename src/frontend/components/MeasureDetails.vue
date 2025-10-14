@@ -137,9 +137,9 @@
 <script setup>
   import { defineProps } from "vue";
   import sanitizeHtml from "sanitize-html";
-  import { formatLastUpdated, saneLinkifyStr } from "../shared/utils.js";
-  import { calculateAndAddSimilarityScores } from "../shared/compareMunicipalities.js";
-  import ratingIcons, { ratingIndex } from "../shared/ratingIcons.js";
+  import { formatLastUpdated, saneLinkifyStr } from "~/shared/utils.js";
+  import { calculateAndAddSimilarityScores } from "~/shared/compareMunicipalities.js";
+  import ratingIcons, { ratingIndex } from "~/shared/ratingIcons.js";
   import { onMounted, onBeforeUnmount, ref } from "vue";
 
   const { $directus, $readItems } = useNuxtApp();

@@ -91,8 +91,8 @@
 import majorCity from '~/assets/images/major-city-dark.svg?raw';
 import minorCity from '~/assets/images/minor-city-dark.svg?raw';
 import sanitizeHtml from "sanitize-html";
-import { getScoreColor, saneLinkifyStr } from "../shared/utils.js"
-import { overwriteSvgStyles } from "../shared/svg-logic.js"
+import { getScoreColor, saneLinkifyStr } from "~/shared/utils.js"
+import { overwriteSvgStyles } from "~/shared/svg-logic.js"
 const { t } = useI18n();
 
 const MunicipalitySvg = ref('')
