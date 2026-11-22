@@ -32,6 +32,11 @@ let edition = 1;
 const upstreamUrl = (path: string) => `${upstream}${path.replace(/^\/api\/stadtlandzahl/, "")}`;
 function context(metric = "power", scope = "DE"): MunicipalityOverview {
   const result = structuredClone(overviewFixture);
+  // The active metric is introduced through its description section (FEATURES.md, dashboard
+  // product information); title-only metrics add no section of their own.
+  result.metrics = result.metrics.map((item) =>
+    item.id === "second-metric" ? { ...item, description: { "de-DE": "Zweiter Vergleichswert der Anlagen." } } : item,
+  );
   result.snapshot_id = `fixture-${metric}-${scope}-${edition}`;
   result.metric_id = metric;
   result.scope = {
@@ -451,7 +456,7 @@ try {
         await canvas.tap({ position });
         return detailLink.isVisible();
       });
-      assert.equal(await detailLink.getAttribute("href"), "/data/stadtkreis_stuttgart/wind-turbines");
+      assert.equal(await detailLink.getAttribute("href"), "/data/stadtkreis_stuttgart#wind-turbines");
       await page
         .getByRole("region", { name: "Karte der kommunalen Kennwerte" })
         .first()
@@ -465,7 +470,7 @@ try {
     await dialog.getByRole("link", { name: /Stuttgart/ }).waitFor();
     assert.equal(
       await dialog.getByRole("link", { name: /Stuttgart/ }).getAttribute("href"),
-      "/data/stadtkreis_stuttgart/wind-turbines",
+      "/data/stadtkreis_stuttgart#wind-turbines",
     );
     await dialog.getByRole("button", { name: "Weitere Gemeinden laden" }).click();
     await dialog.getByRole("link", { name: /Böblingen/ }).waitFor();
@@ -482,6 +487,8 @@ try {
     await page.getByRole("combobox", { name: "Kennwert", exact: true }).selectOption("second-metric");
     await page.waitForURL(/metric=second-metric/);
     await page.getByRole("heading", { name: /Zweiter Kennwert/ }).waitFor();
+    // The new metric's default colour mode is written to the URL once its overview loads.
+    await page.waitForURL((url) => url.searchParams.has("color"));
     assert.equal(new URL(page.url()).searchParams.get("color"), "continuous");
     console.log(width, "metric passed", page.url());
     await page.goBack();

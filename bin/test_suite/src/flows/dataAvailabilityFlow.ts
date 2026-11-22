@@ -38,7 +38,7 @@ export async function runDataAvailabilityFlow(
           const response = await page.goto(`${config.frontendUrl}/data`);
           assert(response?.status() === 200, "The construction notice should be a usable page");
           assertIncludes(
-            await page.locator(".data-construction-notice").innerText(),
+            await page.locator('section[aria-labelledby="data-construction-title"]').innerText(),
             title,
             `Construction notice should be translated for ${locale}`,
           );
@@ -70,7 +70,7 @@ export async function runDataAvailabilityFlow(
           await context.addInitScript((value) => localStorage.setItem("slk_theme_preference", value), theme);
           const page = await context.newPage();
           await page.goto(`${config.frontendUrl}/data`);
-          const notice = page.locator(".data-construction-notice");
+          const notice = page.locator('section[aria-labelledby="data-construction-title"]');
           assertIncludes(await notice.innerText(), explanation, "Custom text should retain line breaks");
           assert(
             (await notice.locator("em").count()) === 0,

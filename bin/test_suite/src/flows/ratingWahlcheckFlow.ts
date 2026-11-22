@@ -606,6 +606,8 @@ async function completePublicWahlcheck(
     for (const question of displayedQuestions) {
       const radio = page.locator(`input[name="question-${question.id}"]`).first();
       await radio.waitFor({ state: "visible", timeout: 30_000 });
+      // The question carousel slides the next question in; wait until it is stable in view (force skips that check).
+      await radio.scrollIntoViewIfNeeded({ timeout: 10_000 });
       await radio.click({ force: true });
     }
 
@@ -932,6 +934,8 @@ async function completeWahlcheckForCounterRegression(
   for (const question of questions) {
     const radio = page.locator(`input[name="question-${question.id}"]`).first();
     await radio.waitFor({ state: "visible", timeout: 30_000 });
+    // The question carousel slides the next question in; wait until it is stable in view (force skips that check).
+    await radio.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await radio.click({ force: true });
   }
 
