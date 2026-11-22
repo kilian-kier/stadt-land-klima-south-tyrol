@@ -1,0 +1,80 @@
+name: St development stack
+description: >-
+  Install locked tooling, generate disposable private configuration, build and start
+  the complete rootless Podman development stack with a freshly imported CMS and the
+  idempotent CI demo content. Requires a prior checkout and setup-node.
+inputs:
+  seed:
+    description: Seed the deterministic public demo dataset after startup
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - name: Install Podman Compose and locked test tooling
+      shell: bash
+      run: |
+        set -euo pipefail
+        pipx install podman-compose==1.6.0
+        podman-compose --version
+        npm ci --prefix bin
+        npm ci --prefix bin/test_suite
+        npm ci --prefix src/directus/cli
+        # The suites import the frontend's checked contracts and their dependencies.
+        npm ci --prefix src/frontend
+        npm --prefix bin/test_suite exec -- playwright install --with-deps chromium
+    - name: Generate disposable private configuration
+      shell: bash
+      run: |
+        set -euo pipefail
+        # The host preflight requires a regular seccomp profile file that is not
+        # group/world writable; the runner image's distro default does not qualify.
+        ls -l /usr/share/containers/seccomp.json
+        mkdir -p ~/.config/containers
+        install -m 0644 "$(readlink -f /usr/share/containers/seccomp.json)" ~/.config/containers/seccomp.json
+        printf '[containers]\nseccomp_profile = "%s"\n' ~/.config/containers/seccomp.json > ~/.config/containers/containers.conf
+        node bin/test_suite/src/st/ciEnvironment.ts --force
+        # Offline Stadt.Land.Zahl stand-in on the host (see slzFixtureServer.ts).
+        mkdir -p .reports/st-e2e
+        nohup node bin/test_suite/src/st/slzFixtureServer.ts 18090 "$PWD/.reports/st-e2e/slz-requests.log"           > .reports/st-e2e/slz-fixture.log 2>&1 &
+        bin/test_suite/src/st/ci-step.sh stack-doctor ./bin/slk stack doctor --env development
+    - name: Build development images
+      shell: bash
+      run: bin/test_suite/src/st/ci-step.sh stack-build ./bin/slk stack build --env development
+    - name: Import schema and seeds into a fresh CMS
+      shell: bash
+      run: bin/test_suite/src/st/ci-step.sh stack-import ./bin/slk stack start --env development --import --prepare-only
+    - name: Wire imported mail flows and start the complete stack
+      shell: bash
+      run: |
+        set -euo pipefail
+        bin/test_suite/src/st/ci-step.sh flow-urls node bin/test_suite/src/st/ciFlowUrls.ts http://127.0.0.1:8081
+        # Provision the restricted translation-worker identity as documented in
+        # DYNAMIC_CONTENT_TRANSLATION.md (generation stays disabled). This happens before
+        # the frontend starts: the Nuxt development server restarts whenever its env changes.
+        worker=$(./bin/slk stack compose --env development -- exec -T -e DIRECTUS_URL=http://127.0.0.1:8055           directus /directus/cli/node_modules/.bin/tsx /directus/cli/provisionTranslationWorker.ts           | grep '^CONTENT_TRANSLATION_WORKER_TOKEN=')
+        echo "::add-mask::${worker#*=}"
+        printf '%s\n' "$worker" >> src/frontend/.env
+        bin/test_suite/src/st/ci-step.sh stack-start ./bin/slk stack start --env development
+        # The frontend must reach the offline data stand-in, not an unreachable host.
+        bin/test_suite/src/st/ci-step.sh slz-reachable podman exec slk-podman-development_frontend_1           node -e "fetch('http://host.containers.internal:18090/api/areas/?limit=1').then(r=>{console.log('SLZ fixture HTTP',r.status);process.exit(r.ok?0:1)})"
+    - name: Seed public demo content
+      if: inputs.seed == 'true'
+      shell: bash
+      working-directory: bin/test_suite
+      run: src/st/ci-step.sh seed npm exec --no -- tsx src/st/seedDemoContent.ts http://localhost:8081 http://localhost:8080 ../../src/directus/.env
+    - name: Apply importer seeds that depend on the demo data
+      if: inputs.seed == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        # The importer's homepage seed only adds its landing block to an existing
+        # homepage (production databases already have one); the demo seed created it.
+        bin/test_suite/src/st/ci-step.sh seed-import ./bin/slk stack compose --env development -- exec -T directus /directus/cli/import-all.sh
+    - name: Warm the development frontend
+      shell: bash
+      working-directory: bin/test_suite
+      # Nuxt/Vite compile pages and optimise client dependencies on first use and then
+      # reload open pages; one unchecked visit per public route keeps that out of tests.
+      run: >-
+        src/st/ci-step.sh warm-up npm exec --no -- tsx src/st/publicRoutes.browser.ts
+        http://localhost:8080 ${{ inputs.seed == 'true' && '../../.reports/st-e2e/demo-manifest.json' || '' }} --warm-up-only
