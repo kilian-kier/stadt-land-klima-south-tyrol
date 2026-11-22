@@ -104,7 +104,8 @@ try {
         assert.equal(await icons.count(), 3, "All canonical sidebar actions share one themed icon each");
         for (const icon of await icons.all()) {
           const size = await icon.boundingBox();
-          assert(size && size.width === 20 && size.height === 20);
+          // Sidebar actions use the large 28px canonical icon (docs/DESIGN_GUIDELINES.md).
+          assert(size && size.width === 28 && size.height === 28, `Sidebar icon is ${size?.width}x${size?.height}`);
         }
         console.log(
           `PASS ${width}px ${theme}: homepage content/photo, full-width timelines, 4.5:1 pill contrast, concise municipality header and matching icons`,

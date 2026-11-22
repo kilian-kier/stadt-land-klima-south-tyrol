@@ -1,4 +1,4 @@
-import { launchBrowser, waitForHydration } from "./lib/browser.js";
+import { launchBrowser, routeOfflineBasemap, waitForHydration } from "./lib/browser.js";
 import { assert } from "./lib/assert.js";
 
 /** Anonymous public smoke: no CMS login, env file, fixtures, or write requests. */
@@ -11,13 +11,14 @@ const base = target.origin;
 const started = performance.now();
 const browser = await launchBrowser(true);
 const context = await browser.newContext({ locale: "de-DE", serviceWorkers: "block" });
+await routeOfflineBasemap(context);
 const failures: string[] = [];
 let blockedWrites = 0;
 await context.route("**/*", async (route) => {
   if (!["GET", "HEAD"].includes(route.request().method())) {
     blockedWrites++;
     await route.abort();
-  } else await route.continue();
+  } else await route.fallback();
 });
 
 try {

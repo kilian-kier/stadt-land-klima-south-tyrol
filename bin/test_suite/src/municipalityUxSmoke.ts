@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { launchBrowser, waitForHydration, collectPublicPageErrors } from "./lib/browser.js";
+import { launchBrowser, waitForHydration, collectPublicPageErrors, routeOfflineBasemap } from "./lib/browser.js";
 import { waitFor } from "./lib/wait.js";
 import { MunicipalityUpdatesSchema } from "../../../src/frontend/shared/contracts/municipalityUpdates.js";
 import { assertMunicipalityDetailLayout } from "./lib/municipalityDetail.js";
@@ -18,6 +18,7 @@ assert.ok(initial, "Seed at least one complete published assessment before runni
 const browser = await launchBrowser(true);
 try {
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  await routeOfflineBasemap(context);
   const page = await context.newPage();
   const errors = collectPublicPageErrors(page);
   const detail = `${base}/municipalities/${initial.municipality.slug}?v=${encodeURIComponent(initial.catalog)}`;
