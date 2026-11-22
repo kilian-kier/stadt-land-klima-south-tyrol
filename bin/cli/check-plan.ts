@@ -18,13 +18,40 @@ export type PlanOptions = {
   profile: CheckProfile;
   only: string[];
   target?: "staging" | "production";
+  /** Explicit origin of another deployment; mutually exclusive with target. */
+  origin?: string;
   reportDirectory: string;
 };
 
+/** Accept HTTPS origins (HTTP only on loopback) without credentials, path, query or fragment. */
+export function releaseOrigin(value: string): string {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error("--origin must be an absolute HTTPS origin such as https://www.example.org.");
+  }
+  const loopback = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+  if (
+    !(url.protocol === "https:" || (url.protocol === "http:" && loopback)) ||
+    url.username ||
+    url.password ||
+    url.pathname !== "/" ||
+    url.search ||
+    url.hash
+  )
+    throw new Error("--origin must be an HTTPS origin without credentials, path, query or fragment.");
+  return url.origin;
+}
+
 export function checkPlan(options: PlanOptions): Check[] {
-  if (options.profile === "release" && !options.target)
-    throw new Error("The read-only release profile requires --target staging or --target production.");
-  if (options.target && options.profile !== "release") throw new Error("--target is only supported by release.");
+  if (options.profile === "release" && !options.target && !options.origin)
+    throw new Error(
+      "The read-only release profile requires --target staging, --target production or --origin <https-origin>.",
+    );
+  if ((options.target || options.origin) && options.profile !== "release")
+    throw new Error("--target and --origin are only supported by release.");
+  if (options.target && options.origin) throw new Error("Use either --target or --origin, not both.");
   const checks: Check[] = [
     {
       id: "runtime",
@@ -138,8 +165,11 @@ export function checkPlan(options: PlanOptions): Check[] {
     checks.push({ id: "diff", group: "diff", executable: "git", args: ["diff", "--check", "HEAD"], cwd: root });
   }
   if (options.profile === "release") {
-    const origin =
-      options.target === "staging" ? "https://staging.stadt-land-klima.de" : "https://www.stadt-land-klima.de";
+    const origin = options.origin
+      ? releaseOrigin(options.origin)
+      : options.target === "staging"
+        ? "https://staging.stadt-land-klima.de"
+        : "https://www.stadt-land-klima.de";
     for (const [id, script] of [
       ["public", "test:public"],
       ["csp", "test:security:csp"],

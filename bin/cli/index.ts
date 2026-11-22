@@ -258,12 +258,16 @@ const parser = yargs(hideBin(process.argv))
           choices: ["staging", "production"] as const,
           description: "Explicit deployed origin for the read-only release profile",
         })
-        .requiresArg(["only", "output", "tail", "timeout-seconds", "target"])
+        .option("origin", {
+          type: "string",
+          description: "Explicit HTTPS origin of another deployment for the read-only release profile",
+        })
+        .requiresArg(["only", "output", "tail", "timeout-seconds", "target", "origin"])
         .check(
           (argv) =>
             argv.profile !== "release" ||
-            Boolean(argv.target) ||
-            "The read-only release profile requires --target staging or --target production.",
+            Boolean(argv.target) !== Boolean(argv.origin) ||
+            "The read-only release profile requires exactly one of --target staging, --target production or --origin <https-origin>.",
         ),
     async (argv) => {
       await checkCommand({
@@ -274,6 +278,7 @@ const parser = yargs(hideBin(process.argv))
         tail: argv.tail,
         ...(argv.timeoutSeconds === undefined ? {} : { timeoutSeconds: argv.timeoutSeconds }),
         ...(argv.target ? { target: argv.target } : {}),
+        ...(argv.origin ? { origin: argv.origin } : {}),
       });
     },
   )

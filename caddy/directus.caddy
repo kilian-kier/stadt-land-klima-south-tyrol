@@ -28,10 +28,11 @@
 		@slk_cms_upgrade header Upgrade *
 		respond @slk_cms_upgrade 403
 		# Sibling subdomains are same-site. Origin checks are required for browser writes.
+		# SLK_CADDY_CMS_ORIGIN/SLK_CADDY_WEBSITE_ORIGIN select the origins of another deployment.
 		@slk_cms_cross_write {
 			method POST PUT PATCH DELETE
 			header Origin *
-			not header Origin https://directus.stadt-land-klima.de
+			not header Origin {$SLK_CADDY_CMS_ORIGIN:https://directus.stadt-land-klima.de}
 		}
 		respond @slk_cms_cross_write 403
 		@slk_cms_cross_metadata {
@@ -78,7 +79,7 @@
 		# Cross-origin website images/SVGs are anonymous, even when the browser has CMS cookies.
 		@slk_cms_public_asset {
 			path /assets/*
-			expression `{http.request.header.Origin} == 'https://future.stadt-land-klima.de' || {http.request.header.Sec-Fetch-Site} in ['same-site', 'cross-site']`
+			expression `{http.request.header.Origin} == '{$SLK_CADDY_WEBSITE_ORIGIN:https://future.stadt-land-klima.de}' || {http.request.header.Sec-Fetch-Site} in ['same-site', 'cross-site']`
 		}
 		handle @slk_cms_public_asset {
 			uri query -access_token
@@ -88,7 +89,7 @@
 				header_up -Authorization
 				header_up -Cookie
 				header_down -Access-Control-Allow-Credentials
-				header_down Access-Control-Allow-Origin https://future.stadt-land-klima.de
+				header_down Access-Control-Allow-Origin {$SLK_CADDY_WEBSITE_ORIGIN:https://future.stadt-land-klima.de}
 				header_down +Vary Origin
 			}
 		}
