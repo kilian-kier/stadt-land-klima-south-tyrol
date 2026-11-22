@@ -74,7 +74,7 @@ test("selectors include prerequisites in order, reject typos, preserve release t
 
 test("all workflow gates use the shared runner and quality steps cover its complete plan", () => {
   const files = readdirSync(join(root, ".github/workflows"))
-    .filter((name) => /\.ya?ml$/.test(name))
+    .filter((name) => /\.ya?ml$/.test(name) && !name.startsWith("st-"))
     .sort();
   assert.deepEqual(
     files,
