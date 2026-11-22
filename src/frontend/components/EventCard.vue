@@ -39,7 +39,7 @@
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 2 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"
               />
             </svg>
             {{ formatEventDateTimeRange(event.start_date, event.end_date, $locale, event.date_only) }}
@@ -65,7 +65,7 @@
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 2 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"
           />
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 14v5m-2.5-2.5H12m0 0h2.5" />
         </svg>
