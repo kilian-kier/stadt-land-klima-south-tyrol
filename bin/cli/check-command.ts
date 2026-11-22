@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { checkPlan, type CheckProfile } from "./check-plan.ts";
+import { checkPlan, releaseOrigin, type CheckProfile } from "./check-plan.ts";
 import {
   createCheckDirectory,
   handleCheckOutputErrors,
@@ -17,6 +17,7 @@ export async function checkCommand(options: {
   tail: number;
   timeoutSeconds?: number;
   target?: "staging" | "production";
+  origin?: string;
 }): Promise<void> {
   handleCheckOutputErrors();
   if (!Number.isSafeInteger(options.tail) || options.tail < 1 || options.tail > 200)
@@ -30,6 +31,7 @@ export async function checkCommand(options: {
     profile: options.profile,
     only: options.only,
     ...(options.target ? { target: options.target } : {}),
+    ...(options.origin ? { origin: options.origin } : {}),
     reportDirectory: join(root, ".reports/checks/PLAN"),
   };
   const checks = checkPlan(planOptions);
@@ -70,6 +72,7 @@ export async function checkCommand(options: {
     tail: options.tail,
     ...(options.timeoutSeconds === undefined ? {} : { timeoutSeconds: options.timeoutSeconds }),
     ...(options.target ? { target: options.target } : {}),
+    ...(options.origin ? { target: releaseOrigin(options.origin) } : {}),
   });
   printCheckReport(report, options.output);
   process.exitCode = report.interrupted ? 130 : report.ok ? 0 : 1;
