@@ -47,7 +47,7 @@
 				match {
 					not path /admin/assets/* /assets/*
 				}
-				key {remote_host}
+				key {client_ip}
 				events 21
 				window 1s
 			}
@@ -55,7 +55,7 @@
 				match {
 					not path /admin/assets/* /assets/*
 				}
-				key {remote_host}
+				key {client_ip}
 				events 620
 				window 1m
 			}
@@ -63,7 +63,7 @@
 				match {
 					path /admin/assets/* /assets/*
 				}
-				key {remote_host}
+				key {client_ip}
 				events 501
 				window 1s
 			}
@@ -71,7 +71,7 @@
 				match {
 					path /admin/assets/* /assets/*
 				}
-				key {remote_host}
+				key {client_ip}
 				events 6500
 				window 1m
 			}
