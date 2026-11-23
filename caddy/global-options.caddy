@@ -3,6 +3,8 @@ persist_config off
 http_port {$SLK_CADDY_HTTP_PORT:80}
 https_port {$SLK_CADDY_HTTPS_PORT:443}
 servers {
+	# Optional host-specific server options such as trusted proxies; without files there are none.
+	import servers.d/*.caddy
 	protocols h1 h2
 	max_header_size 32KB
 	timeouts {
