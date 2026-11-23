@@ -79,5 +79,6 @@ export const SECURITY_LOG_ROUTES = [
   "/api/submit-article",
   "/api/submit-feedback",
   "/api/submit-form-response",
+  "/api/version",
   "/api/wahlcheck-complete",
 ] as const;
