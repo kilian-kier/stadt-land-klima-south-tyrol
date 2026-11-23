@@ -1,0 +1,4 @@
+# Hash-pinned Compose provider for bootstrap-ubuntu.sh (PODMAN.md requires 1.6+).
+# Its python-dotenv and PyYAML dependencies come from security-maintained Ubuntu packages.
+podman-compose==1.6.0 \
+    --hash=sha256:98e48af25d44c10ecef948163bfcca002e32aa8bbb7e66593fbd4faff7270c30
