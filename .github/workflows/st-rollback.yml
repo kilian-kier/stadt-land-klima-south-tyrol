@@ -1,0 +1,68 @@
+name: Rollback
+# Restores the release before the active one on the production server (application images and
+# frontend output; data is not reverted). docs/st/RELEASE.md
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Full commit SHA of the ACTIVE release (the production branch)
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: st-production
+  cancel-in-progress: false
+jobs:
+  rollback:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    environment:
+      name: production
+      url: ${{ vars.DEPLOY_SITE_ORIGIN }}
+    env:
+      SHA: ${{ inputs.sha }}
+      DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+      DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_SITE_ORIGIN: ${{ vars.DEPLOY_SITE_ORIGIN }}
+      DEPLOY_CMS_ORIGIN: ${{ vars.DEPLOY_CMS_ORIGIN }}
+    outputs:
+      live: ${{ steps.live.outputs.commit }}
+    steps:
+      - name: Validate the input
+        run: '[[ "$SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::sha must be a full lowercase commit SHA"; exit 1; }'
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Roll back on the server
+        run: deploy/st/ci-deploy.sh rollback "$SHA"
+      - name: Smoke checks
+        run: deploy/st/ci-deploy.sh smoke "$DEPLOY_SITE_ORIGIN" "$DEPLOY_CMS_ORIGIN"
+      - name: Read the commit that is live now
+        id: live
+        run: |
+          set -euo pipefail
+          commit="$(curl --fail --silent --show-error --proto '=https' "$DEPLOY_SITE_ORIGIN/api/version" | jq -r .commit)"
+          [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::/api/version reports '$commit'"; exit 1; }
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+          echo "::notice title=Live after rollback::$commit"
+
+  record:
+    needs: rollback
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Move the production pointer to the live commit
+        env:
+          LIVE: ${{ needs.rollback.outputs.live }}
+        run: git push origin "$LIVE:refs/heads/production" --force

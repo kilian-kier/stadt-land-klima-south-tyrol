@@ -1,0 +1,184 @@
+name: Release
+# One manual run per release: resolve one commit of main, build it once on the runner, run the
+# quality gate and the full suite on exactly that commit, wait for approval in the "production"
+# environment, deploy the same artifact, verify it and record the release. docs/st/RELEASE.md
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit, branch or tag to release (must be contained in main)
+        required: false
+        default: main
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: st-release
+  cancel-in-progress: false
+jobs:
+  resolve:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+      release_tag: ${{ steps.resolve.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Resolve the commit and name the release
+        id: resolve
+        env:
+          REQUESTED_REF: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          git merge-base --is-ancestor "$sha" origin/main ||
+            { echo "::error::$REQUESTED_REF ($sha) is not contained in main"; exit 1; }
+          day="$(date -u +%Y%m%d)"
+          last="$(git tag -l "release-$day-*" | sed "s/^release-$day-//" | sort -n | tail -n 1)"
+          tag="release-$day-$(( ${last:-0} + 1 ))"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "::notice title=Release::$tag = $sha"
+
+  build:
+    needs: resolve
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          persist-credentials: false
+      - name: Install container tools
+        run: sudo apt-get update && sudo apt-get install -y podman uidmap crun zstd
+      - name: Build the release once
+        env:
+          SHA: ${{ needs.resolve.outputs.sha }}
+          # build-release.sh bakes the commit, this name and the build time into /api/version.
+          RELEASE_TAG: ${{ needs.resolve.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/release"
+          deploy/st/build-release.sh "$SHA" "$RUNNER_TEMP/release"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ needs.resolve.outputs.sha }}
+          path: |
+            ${{ runner.temp }}/release/release-${{ needs.resolve.outputs.sha }}.tar.zst
+            ${{ runner.temp }}/release/release-${{ needs.resolve.outputs.sha }}.manifest.json
+          retention-days: 7
+          if-no-files-found: error
+
+  quality:
+    needs: resolve
+    uses: ./.github/workflows/quality.yml
+    with:
+      ref: ${{ needs.resolve.outputs.sha }}
+
+  e2e:
+    needs: resolve
+    uses: ./.github/workflows/st-e2e.yml
+    with:
+      ref: ${{ needs.resolve.outputs.sha }}
+
+  production:
+    needs: [resolve, build, quality, e2e]
+    # A repository variable (not an environment variable, which job conditions cannot see)
+    # switches deployments on once the server and the "production" environment are configured.
+    if: vars.ST_PRODUCTION_DEPLOY == 'true'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 120
+    environment:
+      name: production
+      url: ${{ vars.DEPLOY_SITE_ORIGIN }}
+    concurrency:
+      group: st-production
+      cancel-in-progress: false
+    env:
+      SHA: ${{ needs.resolve.outputs.sha }}
+      DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+      DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_SITE_ORIGIN: ${{ vars.DEPLOY_SITE_ORIGIN }}
+      DEPLOY_CMS_ORIGIN: ${{ vars.DEPLOY_CMS_ORIGIN }}
+    steps:
+      - name: Check the production configuration
+        run: |
+          set -euo pipefail
+          missing=()
+          for name in DEPLOY_SSH_HOST DEPLOY_SSH_USER DEPLOY_KNOWN_HOSTS DEPLOY_SSH_KEY DEPLOY_SITE_ORIGIN DEPLOY_CMS_ORIGIN; do
+            [[ -n "${!name}" ]] || missing+=("$name")
+          done
+          ((${#missing[@]} == 0)) ||
+            { echo "::error::The production environment lacks: ${missing[*]} (docs/st/DEPLOYMENT.md)"; exit 1; }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The deploy scripts always come from main, never from the requested commit.
+          ref: main
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-${{ needs.resolve.outputs.sha }}
+          path: ${{ runner.temp }}/release
+      - name: Upload the release to the server
+        run: deploy/st/ci-deploy.sh upload "$SHA" "$RUNNER_TEMP/release/release-$SHA.tar.zst" "$RUNNER_TEMP/release/release-$SHA.manifest.json"
+      - name: Deploy (the server backs up first and rolls back itself on failure)
+        id: deploy
+        run: deploy/st/ci-deploy.sh deploy "$SHA"
+      - name: Public smoke checks, including /api/version
+        run: deploy/st/ci-deploy.sh smoke "$DEPLOY_SITE_ORIGIN" "$DEPLOY_CMS_ORIGIN" "$SHA"
+      - name: Roll back after failed smoke checks
+        if: failure() && steps.deploy.outcome == 'success'
+        run: |
+          deploy/st/ci-deploy.sh rollback "$SHA"
+          deploy/st/ci-deploy.sh smoke "$DEPLOY_SITE_ORIGIN" "$DEPLOY_CMS_ORIGIN"
+
+  record:
+    needs: [resolve, production]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      SHA: ${{ needs.resolve.outputs.sha }}
+      RELEASE_TAG: ${{ needs.resolve.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Move the production pointer and tag the release
+        run: |
+          set -euo pipefail
+          previous="$(git rev-parse -q --verify origin/production || true)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$RELEASE_TAG" "$SHA" -m "Release $RELEASE_TAG"
+          git push origin "$RELEASE_TAG" "$SHA:refs/heads/production" --force
+          {
+            echo "## $RELEASE_TAG is live"
+            echo
+            echo "Commit \`$SHA\`"
+            if [[ -n "$previous" && "$previous" != "$SHA" ]]; then
+              echo
+              echo "[Changes since the previous release](https://github.com/$GITHUB_REPOSITORY/compare/$previous...$SHA)"
+              echo
+              git log --format='- %s (%h)' "$previous..$SHA"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  production-skipped:
+    needs: [resolve, build, quality, e2e]
+    if: vars.ST_PRODUCTION_DEPLOY != 'true'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 2
+    steps:
+      - name: Deployment is switched off
+        run: |
+          echo "::notice title=Deployment skipped::The build and all tests passed. Set the repository variable ST_PRODUCTION_DEPLOY=true once the production environment is configured (docs/st/RELEASE.md)."
