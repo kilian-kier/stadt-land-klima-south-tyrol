@@ -1,0 +1,85 @@
+name: St deployment rehearsal
+# End-to-end proof of the server deployment on a fresh GitHub Ubuntu VM: bootstrap,
+# restricted CI access, update, automatic rollback of a broken release, refusal of
+# commits outside main, CI-requested rollback, redeploy and the nightly backup.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 0"
+  pull_request:
+    paths:
+      - deploy/st/**
+      - .github/workflows/st-deploy*.yml
+      - podman/release/**
+      - podman/apparmor/**
+      - caddy/**
+      - bin/cli/host-*.ts
+      - bin/cli/check-plan.ts
+      - bin/cli/stack.ts
+      - bin/lib/podman-*.ts
+      - podman-compose*.yaml
+  push:
+    branches: [main]
+    paths:
+      - deploy/st/**
+      - .github/workflows/st-deploy*.yml
+      - podman/release/**
+      - podman/apparmor/**
+      - caddy/**
+      - bin/cli/host-*.ts
+      - bin/cli/check-plan.ts
+      - bin/cli/stack.ts
+      - bin/lib/podman-*.ts
+      - podman-compose*.yaml
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  rehearsal:
+    # The first Ubuntu LTS whose Podman meets upstream's 5.4+ production requirement.
+    runs-on: ubuntu-26.04
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prepare the stand-in st, review clone and CI key
+        run: bash deploy/st/rehearsal/scenario.sh prepare
+      - name: Upgraded-host leftovers are refused
+        run: bash deploy/st/rehearsal/scenario.sh leftovers
+      - name: Bootstrap the server (twice, for idempotency)
+        run: bash deploy/st/rehearsal/scenario.sh bootstrap
+      - name: CI key reaches only the forced command
+        run: bash deploy/st/rehearsal/scenario.sh restricted
+      - name: Deploy the active commit (no-op)
+        run: bash deploy/st/rehearsal/scenario.sh deploy_unchanged
+      - name: Deploy an update
+        run: bash deploy/st/rehearsal/scenario.sh deploy_update
+      - name: Broken release rolls back automatically
+        run: bash deploy/st/rehearsal/scenario.sh deploy_broken
+      - name: Commits outside main are refused
+        run: bash deploy/st/rehearsal/scenario.sh refuse_foreign
+      - name: CI-requested rollback
+        run: bash deploy/st/rehearsal/scenario.sh rollback_release
+      - name: Redeploy after rollback
+        run: bash deploy/st/rehearsal/scenario.sh redeploy
+      - name: Build release on runner (prebuilt images)
+        run: bash deploy/st/rehearsal/scenario.sh build_on_runner
+      - name: Upload and deploy prebuilt release
+        run: bash deploy/st/rehearsal/scenario.sh upload_and_deploy
+      - name: Tampered upload is refused
+        run: bash deploy/st/rehearsal/scenario.sh refused_tampered_upload
+      - name: Deploy without upload is refused
+        run: bash deploy/st/rehearsal/scenario.sh refused_no_upload
+      - name: Memory sampling verifies 1.6GB limit
+        run: bash deploy/st/rehearsal/scenario.sh memory_sampling
+      - name: Pinned Cloudflare ranges are current
+        run: bash deploy/st/rehearsal/scenario.sh cloudflare_ranges
+      - name: Nightly backup and boot units
+        run: bash deploy/st/rehearsal/scenario.sh backup
+      - name: Failure diagnostics
+        if: failure()
+        run: bash deploy/st/rehearsal/scenario.sh diagnostics
