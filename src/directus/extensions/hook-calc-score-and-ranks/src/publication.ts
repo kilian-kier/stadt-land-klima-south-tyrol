@@ -14,7 +14,7 @@ export type PublicationEventContext = {
 const admin = { admin: true, role: null, roles: [], user: null, app: false, ip: null };
 const NotVerified = createError(
   "ACCOUNT_NOT_VERIFIED",
-  "Account verification is an anti-spam feature. Email info@stadt-land-klima.de to verify your account before publishing or enabling a preview.",
+  "Account verification is an anti-spam feature. Email info@climateaction.bz to verify your account before publishing or enabling a preview.",
   403,
 );
 const Incomplete = createError(

@@ -608,7 +608,7 @@ async function handleSendTestMail() {
   try {
     const result = await callEndpoint<MailSendResult>("test-mail");
     const candidateName = result.selectedCandidate?.name ?? "eine zufällig ausgewählte Person";
-    const recipient = result.testRecipient ?? "info@stadt-land-klima.de";
+    const recipient = result.testRecipient ?? "info@climateaction.bz";
 
     if ((result.sentCount ?? 0) > 0) {
       showFeedback("success", `Test-E-Mail für ${candidateName} wurde an ${recipient} versendet.`, 9000);

@@ -1486,7 +1486,7 @@ export async function runRatingWahlcheckFlow(
 
     runner.addManualCheck(
       "rating_wahlcheck_flow",
-      `Verify the review request email for "${election.descriptor}" arrived at ${fixture.config.env.WAHLCHECK_EMAIL || "info@stadt-land-klima.de"} and links to ${fixture.config.backendUrl}/admin/content/elections/${election.id}.`,
+      `Verify the review request email for "${election.descriptor}" arrived at ${fixture.config.env.WAHLCHECK_EMAIL || "info@climateaction.bz"} and links to ${fixture.config.backendUrl}/admin/content/elections/${election.id}.`,
     );
   });
 

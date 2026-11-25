@@ -104,7 +104,7 @@ interface MailConfiguration {
 
 const MIN_QUESTIONS = 7;
 const MIN_CANDIDATES = 2;
-const ALWAYS_CC = "info@stadt-land-klima.de";
+const ALWAYS_CC = "info@climateaction.bz";
 const EMAIL_PATTERN = /^[A-Za-z0-9_!#$%&'*+/=?`{|}~^.-]+@[A-Za-z0-9.-]+$/;
 const STADT_LAND_KLIMA_LOGO_CONTENT_ID = "stadt-land-klima-logo@stadt-land-klima.de";
 // PNG rendition of frontend/assets/images/Stadt-Land-Klima-Logo.svg. Keeping it
