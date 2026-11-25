@@ -181,7 +181,7 @@ async function requestReview(
     };
   }
 
-  const recipient = env.WAHLCHECK_EMAIL || "info@stadt-land-klima.de";
+  const recipient = env.WAHLCHECK_EMAIL || "info@climateaction.bz";
   const localteamName =
     typeof election.localteam === "object" && election.localteam !== null ? election.localteam.municipality_name : null;
   const electionLabel = election.descriptor || String(electionId);

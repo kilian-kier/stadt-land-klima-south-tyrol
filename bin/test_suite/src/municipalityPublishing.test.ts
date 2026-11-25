@@ -64,7 +64,7 @@ test("unverified actors cannot change either state; errors explain anti-spam and
   ]) {
     await assert.rejects(enforcePublication(payload, meta, event, f.context), (error: unknown) => {
       assert.ok(error instanceof Error);
-      assert.match(error.message, /anti-spam.*info@stadt-land-klima.de/);
+      assert.match(error.message, /anti-spam.*info@climateaction.bz/);
       assert.equal((error as Error & { code: string }).code, "ACCOUNT_NOT_VERIFIED");
       return true;
     });

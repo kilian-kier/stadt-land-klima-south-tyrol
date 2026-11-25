@@ -87,7 +87,7 @@ export async function runMunicipalityPublishingFlow(runner: TestRunner, fixture:
             error = String(caught);
           }
           assertIncludes(error, "anti-spam", "API must explain verification");
-          assertIncludes(error, "info@stadt-land-klima.de", "API must supply verification contact");
+          assertIncludes(error, "info@climateaction.bz", "API must supply verification contact");
         }
         assertEqual((await score()).published, false, "Unverified writes must not publish");
       },
@@ -171,7 +171,7 @@ export async function runMunicipalityPublishingFlow(runner: TestRunner, fixture:
           await page.getByRole("dialog").waitFor();
           const message = await page.getByRole("dialog").innerText();
           assertIncludes(message, "Anti-Spam", "Dialog must explain anti-spam verification");
-          assertIncludes(message, "info@stadt-land-klima.de", "Dialog must supply verification contact");
+          assertIncludes(message, "info@climateaction.bz", "Dialog must supply verification contact");
           await page.keyboard.press("Escape");
           await admin.updateUser(member.id, { verified: true });
           await admin.updateItem("municipality_scores", scoreId, { percentage_rated: 99 });
