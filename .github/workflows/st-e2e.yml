@@ -1,0 +1,411 @@
+name: Full-stack regression suite
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit, branch or tag to test; empty tests the triggering commit
+        type: string
+        required: false
+        default: ""
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: st-e2e-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}-${{ inputs.ref }}
+  cancel-in-progress: false
+env:
+  FORCE_COLOR: "0"
+  TEST_HEADLESS: "true"
+  SLK_TEST_OFFLINE_BASEMAP: "1"
+  BACKEND: http://localhost:8081
+  FRONTEND: http://localhost:8080
+  MANIFEST: ../../.reports/st-e2e/demo-manifest.json
+jobs:
+  public:
+    name: Public site, contracts and permissions
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+        working-directory: bin/test_suite
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref }}
+      - name: Record the tested commit
+        shell: bash
+        working-directory: .
+        run: echo "::notice title=Tested commit::$(git rev-parse HEAD) (workflow sha ${GITHUB_SHA})"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: |
+            bin/package-lock.json
+            bin/test_suite/package-lock.json
+            src/directus/cli/package-lock.json
+            src/frontend/package-lock.json
+      - id: stack
+        uses: ./.github/actions/st-dev-stack
+      - name: Helper unit tests
+        timeout-minutes: 3
+        if: ${{ !cancelled() }}
+        run: src/st/ci-step.sh st-unit npm run test:st:unit
+      - name: Import idempotency (schema, access control, flows, seeds)
+        timeout-minutes: 10
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh import-idempotency npm run st:import-idempotency -- "$BACKEND" "$FRONTEND" ../../src/directus/.env
+      - name: Permission boundaries against the YAML policies
+        timeout-minutes: 10
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh permissions npm run st:permissions -- "$BACKEND" "$FRONTEND" ../../src/directus/.env
+      - name: Public API contracts
+        timeout-minutes: 5
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh contracts npm run st:contracts -- "$FRONTEND" "$MANIFEST"
+      - name: Route crawl in German, English and Italian
+        timeout-minutes: 15
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh crawl npm run st:crawl -- "$FRONTEND" "$MANIFEST"
+      - name: Desktop and mobile interactions
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh interactions npm run st:interactions -- "$FRONTEND"
+      - name: Public smoke
+        timeout-minutes: 5
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh public-smoke npm run test:public -- "$FRONTEND"
+      - name: SEO
+        timeout-minutes: 5
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh seo npm run test:seo -- "$FRONTEND"
+      - name: Styles and responsive layout
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh styles npm run test:styles -- "$FRONTEND"
+      - name: Header navigation (browser)
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        env:
+          TEST_FRONTEND_URL: ${{ env.FRONTEND }}
+        run: src/st/ci-step.sh header-navigation npm run test:header-navigation:browser
+      - name: UI feedback acceptance
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh ui-feedback npm run test:ui-feedback -- "$FRONTEND"
+      - name: Feedback follow-up acceptance
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh feedback-followup npm run test:feedback-followup -- "$FRONTEND"
+      - name: Municipality UX acceptance
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh municipality-ux npm run test:municipality-ux:live -- "$FRONTEND"
+      - name: Collect container logs
+        if: always()
+        run: src/st/collect-stack-logs.sh
+      - name: Annotate failures
+        if: failure() || cancelled()
+        run: >-
+          node src/st/annotateFailure.ts "Public site"
+          "../../.reports/st-e2e/pending/*.log"
+          "../../.reports/st-e2e/containers/*frontend*.log"
+          "../../.reports/st-e2e/containers/*directus*.log"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: st-e2e-public
+          path: |
+            .reports/
+            /tmp/slk-*.png
+          include-hidden-files: true
+          retention-days: 14
+
+  production:
+    name: Production frontend build (crawl and contracts)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+        working-directory: bin/test_suite
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref }}
+      - name: Record the tested commit
+        shell: bash
+        working-directory: .
+        run: echo "::notice title=Tested commit::$(git rev-parse HEAD) (workflow sha ${GITHUB_SHA})"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: |
+            bin/package-lock.json
+            bin/test_suite/package-lock.json
+            src/directus/cli/package-lock.json
+            src/frontend/package-lock.json
+      - id: stack
+        uses: ./.github/actions/st-dev-stack
+      - name: Start memory monitoring
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: |
+          mkdir -p ../../.reports/st-e2e
+          (while true; do
+            podman stats --no-stream --format json >> ../../.reports/st-e2e/memory-samples.jsonl 2>/dev/null || true
+            sleep 5
+          done) &
+          echo $! > ../../.reports/st-e2e/memory-monitor.pid
+      - name: Build and serve the production frontend
+        timeout-minutes: 15
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          /usr/bin/time -v bash -c 'cd ../../src/frontend && npx nuxt build' 2>&1 | tee ../../.reports/st-e2e/nuxt-build-time.log
+          src/st/ci-step.sh production-frontend src/st/productionFrontend.sh 3100
+      - id: production
+        name: Production API contracts
+        timeout-minutes: 5
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh production-contracts npm run st:contracts -- http://localhost:3100 "$MANIFEST"
+      - name: Production route crawl in German, English and Italian
+        timeout-minutes: 15
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh production-crawl npm run st:crawl -- http://localhost:3100 "$MANIFEST"
+      - name: Collect memory peaks
+        if: always()
+        run: |
+          if [ -f ../../.reports/st-e2e/memory-monitor.pid ]; then
+            kill $(cat ../../.reports/st-e2e/memory-monitor.pid) 2>/dev/null || true
+          fi
+          if [ -f ../../.reports/st-e2e/memory-samples.jsonl ]; then
+            node -e '
+              const fs = require("fs");
+              const lines = fs.readFileSync("../../.reports/st-e2e/memory-samples.jsonl", "utf8").trim().split("\n");
+              const peaks = {};
+              lines.forEach(line => {
+                try {
+                  const stats = JSON.parse(line);
+                  stats.forEach(c => {
+                    const name = c.Name || c.name;
+                    const mem = parseInt((c.MemUsage || c.mem_usage || "").split("/")[0]) || 0;
+                    peaks[name] = Math.max(peaks[name] || 0, mem);
+                  });
+                } catch {}
+              });
+              const table = Object.entries(peaks).map(([name, bytes]) => 
+                `| ${name} | ${(bytes / 1024 / 1024).toFixed(1)} MB |`
+              ).join("\n");
+              const summary = `### Memory peaks (production)\n\n| Container | Peak RSS |\n|-----------|----------|\n${table}\n`;
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+              const notice = Object.entries(peaks).map(([n, b]) => `${n}=${(b/1024/1024).toFixed(1)}MB`).join(", ");
+              console.log(`::notice title=Memory peaks (production)::${notice}`);
+            ' || echo "::warning::Memory measurement incomplete"
+          fi
+          if [ -f ../../.reports/st-e2e/nuxt-build-time.log ]; then
+            BUILD_RSS=$(grep "Maximum resident set size" ../../.reports/st-e2e/nuxt-build-time.log | awk '{print $6}')
+            if [ -n "$BUILD_RSS" ]; then
+              BUILD_MB=$(echo "scale=1; $BUILD_RSS / 1024" | bc)
+              echo "| nuxt build | ${BUILD_MB} MB |" >> $GITHUB_STEP_SUMMARY
+              echo "::notice title=Nuxt build peak::${BUILD_MB} MB"
+            fi
+          fi
+      - name: Collect container logs
+        if: always()
+        run: src/st/collect-stack-logs.sh
+      - name: Annotate failures
+        if: failure() || cancelled()
+        run: >-
+          node src/st/annotateFailure.ts "Production frontend"
+          "../../.reports/st-e2e/pending/*.log"
+          "../../.reports/st-e2e/production-frontend.log"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: st-e2e-production
+          path: |
+            .reports/
+            /tmp/slk-*.png
+          include-hidden-files: true
+          retention-days: 14
+
+  live:
+    name: Live CMS workflows and database suites
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+        working-directory: bin/test_suite
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref }}
+      - name: Record the tested commit
+        shell: bash
+        working-directory: .
+        run: echo "::notice title=Tested commit::$(git rev-parse HEAD) (workflow sha ${GITHUB_SHA})"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: |
+            bin/package-lock.json
+            bin/test_suite/package-lock.json
+            src/directus/cli/package-lock.json
+            src/frontend/package-lock.json
+      - id: stack
+        uses: ./.github/actions/st-dev-stack
+      - name: Start memory monitoring
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: |
+          mkdir -p ../../.reports/st-e2e
+          (while true; do
+            podman stats --no-stream --format json >> ../../.reports/st-e2e/memory-samples-live.jsonl 2>/dev/null || true
+            sleep 5
+          done) &
+          echo $! > ../../.reports/st-e2e/memory-monitor-live.pid
+      - name: Prepare database-backed and build-artifact suites
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          npm ci --prefix ../../src/directus/extensions/content-translations --ignore-scripts
+      - name: Live suite (fast profile)
+        timeout-minutes: 10
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh live-fast npm exec --no -- tsx src/run.ts "$BACKEND" "$FRONTEND" ../../src/directus/.env
+      - name: Live suite (full profile)
+        timeout-minutes: 25
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh live-full npm exec --no -- tsx src/run.ts "$BACKEND" "$FRONTEND" ../../src/directus/.env --full
+      - name: Blokkli persistence (browser)
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh blokkli npm run test:blokkli
+      - name: Content translation (database)
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh translation-database npm run test:content-translation:database
+      - name: Content translation (reader)
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh translation-reader npm run test:content-translation:reader
+      - name: Preview and migration security
+        timeout-minutes: 20
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: |
+          set -uo pipefail
+          status=0
+          src/st/ci-step.sh security-preview npm run test:security:preview -- "$BACKEND" "$FRONTEND" ../../src/directus/.env || status=1
+          src/st/ci-step.sh frontend-build bash -c 'cd ../../src/frontend && npx nuxt build --dotenv /dev/null' || status=1
+          TEST_RETIRED_DIRECTUS_USER_ID=$(node -p "require('$MANIFEST').retiredLegacyUserId") src/st/ci-step.sh security-migration npm run test:security:migration -- "$BACKEND" "$FRONTEND" ../../src/directus/.env || status=1
+          exit $status
+      - name: Legacy image buttons and project map
+        timeout-minutes: 10
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: |
+          set -uo pipefail
+          status=0
+          src/st/ci-step.sh legacy-buttons npm run test:legacy-buttons -- "$BACKEND" "$FRONTEND" ../../src/directus/.env || status=1
+          src/st/ci-step.sh project-map npm run test:project-map:live -- "$FRONTEND" "$BACKEND" ../../src/directus/.env || status=1
+          exit $status
+      - name: CMS CLI live integration
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh cms-cli npm run test:cli
+      - name: Collect memory peaks
+        if: always()
+        run: |
+          if [ -f ../../.reports/st-e2e/memory-monitor-live.pid ]; then
+            kill $(cat ../../.reports/st-e2e/memory-monitor-live.pid) 2>/dev/null || true
+          fi
+          if [ -f ../../.reports/st-e2e/memory-samples-live.jsonl ]; then
+            node -e '
+              const fs = require("fs");
+              const lines = fs.readFileSync("../../.reports/st-e2e/memory-samples-live.jsonl", "utf8").trim().split("\n");
+              const peaks = {};
+              lines.forEach(line => {
+                try {
+                  const stats = JSON.parse(line);
+                  stats.forEach(c => {
+                    const name = c.Name || c.name;
+                    const mem = parseInt((c.MemUsage || c.mem_usage || "").split("/")[0]) || 0;
+                    peaks[name] = Math.max(peaks[name] || 0, mem);
+                  });
+                } catch {}
+              });
+              const table = Object.entries(peaks).map(([name, bytes]) => 
+                `| ${name} | ${(bytes / 1024 / 1024).toFixed(1)} MB |`
+              ).join("\n");
+              const summary = `### Memory peaks (live)\n\n| Container | Peak RSS |\n|-----------|----------|\n${table}\n`;
+              fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+              const notice = Object.entries(peaks).map(([n, b]) => `${n}=${(b/1024/1024).toFixed(1)}MB`).join(", ");
+              console.log(`::notice title=Memory peaks (live)::${notice}`);
+            ' || echo "::warning::Memory measurement incomplete"
+          fi
+      - name: Collect container logs
+        if: always()
+        run: src/st/collect-stack-logs.sh
+      - name: Annotate failures
+        if: failure() || cancelled()
+        run: >-
+          node src/st/annotateFailure.ts "Live CMS and database"
+          "../../.reports/st-e2e/pending/*.log"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: st-e2e-live
+          path: |
+            .reports/
+            /tmp/slk-*.png
+          include-hidden-files: true
+          retention-days: 14
+
+  isolated:
+    name: Isolated browser fixtures
+    runs-on: ubuntu-26.04
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+        working-directory: bin/test_suite
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref }}
+      - name: Record the tested commit
+        shell: bash
+        working-directory: .
+        run: echo "::notice title=Tested commit::$(git rev-parse HEAD) (workflow sha ${GITHUB_SHA})"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: |
+            bin/test_suite/package-lock.json
+            src/frontend/package-lock.json
+      - name: Install locked frontend and browser tooling
+        run: |
+          set -euo pipefail
+          npm ci
+          npm ci --prefix ../../src/frontend
+          npm exec -- playwright install --with-deps chromium
+      - name: Data dashboard with isolated CMS/data fixtures
+        timeout-minutes: 10
+        run: src/st/ci-step.sh data-dashboard npm run test:data-dashboard:browser
+      - name: Annotate failures
+        if: failure() || cancelled()
+        run: node src/st/annotateFailure.ts "Isolated browser" "../../.reports/st-e2e/pending/*.log" "../../.reports/checks/dashboard-browser/nuxt.log"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: st-e2e-isolated
+          path: .reports/
+          include-hidden-files: true
+          retention-days: 14

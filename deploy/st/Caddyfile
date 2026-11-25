@@ -1,0 +1,28 @@
+# St gateway entrypoint, installed unchanged as /etc/caddy/Caddyfile by host-install.mts.
+# Host-specific values come from /etc/systemd/system/caddy.service.d/slk-st.conf:
+#   SLK_CADDY_SITE_HOST / SLK_CADDY_CMS_HOST  public website and isolated CMS hostnames
+#   SLK_CADDY_WEBSITE_ORIGIN / SLK_CADDY_CMS_ORIGIN  the same values as https:// origins
+#   SLK_CADDY_TLS  ACME contact email for public certificates, or "internal" for a private CA
+# The shared routing, security and rate-limit rules are the maintained upstream snippets.
+import global.future.caddy
+import application.caddy
+import directus.caddy
+
+http://{$SLK_CADDY_SITE_HOST}, http://{$SLK_CADDY_CMS_HOST} {
+	redir https://{host}{uri} 308
+}
+
+https://{$SLK_CADDY_SITE_HOST} {
+	tls {$SLK_CADDY_TLS} {
+		protocols tls1.2 tls1.3
+	}
+	import legacy-cms.caddy
+	import slk_application
+}
+
+https://{$SLK_CADDY_CMS_HOST} {
+	tls {$SLK_CADDY_TLS} {
+		protocols tls1.2 tls1.3
+	}
+	import slk_directus
+}

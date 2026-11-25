@@ -424,15 +424,11 @@ html[data-theme="staedteChallengeDark"] .slk-home-step-icon {
   margin-inline: calc((100% - var(--slk-timeline-width, 100vw)) / 2);
   box-shadow: 0 6px 12px -6px color-mix(in srgb, var(--slk-shadow-color) 85%, transparent);
 }
+/* The strip starts, ends and clips at the page content edges (docs/DESIGN_GUIDELINES.md). */
 .slk-timeline-links {
-  width: calc(100% - 2rem);
-  max-width: calc(var(--breakpoint-xl) - 2rem);
+  width: calc(100% - 2 * var(--slk-page-gutter));
+  max-width: var(--breakpoint-xl);
   margin-inline: auto;
-}
-@media (min-width: 640px) {
-  .slk-timeline-links {
-    width: calc(100% - 3rem);
-  }
 }
 .slk-timeline-pill,
 .slk-news-filter {

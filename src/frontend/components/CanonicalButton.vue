@@ -214,7 +214,9 @@ html[data-theme="staedteChallengeDark"] .canonical-button--outline {
   border-color: var(--slk-surface);
 }
 
-.canonical-button:not(:disabled):focus-visible {
+/* Match the filled hover selector's specificity so keyboard focus stays distinct while hovered. */
+.canonical-button:not(.canonical-button--outline):not(:disabled):focus-visible,
+.canonical-button--outline:not(:disabled):focus-visible {
   outline-color: var(--btn-focus);
 }
 

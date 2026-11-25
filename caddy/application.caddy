@@ -25,7 +25,7 @@
 (slk_proxy_headers) {
 	header_up Host {host}
 	header_up -Forwarded
-	header_up X-Real-IP {remote_host}
+	header_up X-Real-IP {client_ip}
 	header_down -Server
 	header_down -X-Powered-By
 }

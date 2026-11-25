@@ -73,17 +73,25 @@ export function backupAndRetain(settings: HostSettings, paths: string[], run: Ba
   }
 }
 
+// Mounted-environment database containers receive POSTGRES_* only through their slk-env loader;
+// direct engine exec does not inherit PID 1's environment. Native-secret containers have no loader.
+const loaderShell =
+  'if command -v slk-env >/dev/null 2>&1; then exec slk-env sh -c "$0" "$@"; fi; exec sh -c "$0" "$@"';
+export function databaseShell(script: string, ...args: string[]): string[] {
+  return ["sh", "-c", loaderShell, script, ...args];
+}
+
 export function dumpHostDatabases(dumps: string, database: string, podman: BackupCommand) {
   for (const file of readdirSync(dumps)) if (file.endsWith(".partial")) unlinkSync(join(dumps, file));
-  podman("", [database, "sh", "-c", 'pg_dumpall -U "$POSTGRES_USER" --globals-only'], {
+  podman("", [database, ...databaseShell('pg_dumpall -U "$POSTGRES_USER" --globals-only')], {
     output: `${dumps}/globals.sql.partial`,
   });
   renameSync(`${dumps}/globals.sql.partial`, `${dumps}/globals.sql`);
   const databases = podman("", [
     database,
-    "sh",
-    "-c",
-    `psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT datname FROM pg_database WHERE NOT datistemplate AND datname <> 'postgres' ORDER BY 1"`,
+    ...databaseShell(
+      `psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT datname FROM pg_database WHERE NOT datistemplate AND datname <> 'postgres' ORDER BY 1"`,
+    ),
   ])
     .trim()
     .split("\n");
@@ -91,7 +99,7 @@ export function dumpHostDatabases(dumps: string, database: string, podman: Backu
     throw new Error("No safe database names found");
   for (const db of databases) {
     const partial = `${dumps}/${db}.pgdump.partial`;
-    podman("", [database, "sh", "-c", 'pg_dump -U "$POSTGRES_USER" -Fc -Z 6 "$1"', "_", db], { output: partial });
+    podman("", [database, ...databaseShell('pg_dump -U "$POSTGRES_USER" -Fc -Z 6 "$1"', "_", db)], { output: partial });
     podman("", ["-i", database, "pg_restore", "--list"], { input: partial });
     renameSync(partial, `${dumps}/${db}.pgdump`);
   }

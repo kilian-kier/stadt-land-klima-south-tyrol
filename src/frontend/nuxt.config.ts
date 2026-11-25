@@ -168,6 +168,10 @@ export default defineNuxtConfig({
       plausibleAnalyticsDomain: "",
       // Same-origin browser proxy. The real upstream URL and credentials stay private.
       stadtlandzahlBaseUrl: "/api/stadtlandzahl",
+      // Release identity for /api/version, baked in by the production build (deploy/st/build-release.sh).
+      releaseCommit: process.env.NUXT_PUBLIC_RELEASE_COMMIT || "unknown",
+      releaseTag: process.env.NUXT_PUBLIC_RELEASE_TAG || "unknown",
+      releaseBuiltAt: process.env.NUXT_PUBLIC_RELEASE_BUILT_AT || "unknown",
     },
   },
   hooks: {
@@ -282,7 +286,9 @@ export default defineNuxtConfig({
         "@directus/sdk",
         "@iconify/vue",
         "altcha/external",
+        "dom-serializer",
         "entities",
+        "htmlparser2",
         "zod/v4",
         "@vue-leaflet/vue-leaflet",
         "@maplibre/maplibre-gl-style-spec",

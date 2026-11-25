@@ -1,0 +1,250 @@
+# Merge new upstream commits into sync/upstream, gate the merge and propose it to main.
+# Behavior, repository settings and the optional token are documented in docs/st/UPSTREAM_SYNC.md.
+name: Upstream sync
+on:
+  schedule:
+    - cron: "0 22 * * 6"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild and re-test sync/upstream even if it already contains the current upstream and main
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: st-upstream-sync
+  cancel-in-progress: false
+env:
+  UPSTREAM_REPOSITORY: ${{ vars.SLK_UPSTREAM_REPOSITORY || 'StrategieLukas/stadt-land-klima' }}
+  UPSTREAM_BRANCH: ${{ vars.SLK_UPSTREAM_BRANCH || 'main' }}
+  SYNC_BRANCH: sync/upstream
+  STATUS_CONTEXT: upstream-sync
+  CONFLICT_TITLE: Upstream sync blocked by merge conflicts
+jobs:
+  merge:
+    # Never run in the upstream repository itself.
+    if: github.repository != (vars.SLK_UPSTREAM_REPOSITORY || 'StrategieLukas/stadt-land-klima')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      statuses: write
+      issues: write
+    outputs:
+      state: ${{ steps.merge.outputs.state }}
+      sha: ${{ steps.merge.outputs.sha }}
+      base: ${{ steps.merge.outputs.base }}
+      upstream: ${{ steps.merge.outputs.upstream }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Merge upstream into the sync branch
+        id: merge
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUSH_TOKEN: ${{ secrets.SLK_UPSTREAM_SYNC_TOKEN || github.token }}
+          FORCE: ${{ inputs.force || false }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git fetch --no-tags "https://github.com/$UPSTREAM_REPOSITORY.git" "+refs/heads/$UPSTREAM_BRANCH:refs/remotes/upstream/$UPSTREAM_BRANCH"
+          git fetch --no-tags origin "+refs/heads/$SYNC_BRANCH:refs/remotes/origin/$SYNC_BRANCH" 2>/dev/null || true
+          base=$(git rev-parse HEAD)
+          upstream=$(git rev-parse "refs/remotes/upstream/$UPSTREAM_BRANCH")
+          {
+            echo "base=$base"
+            echo "upstream=$upstream"
+          } >>"$GITHUB_OUTPUT"
+          incoming=$(git rev-list --count "$base..$upstream")
+          close_conflict_issue() {
+            gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "in:title \"$CONFLICT_TITLE\"" --json number,title \
+              --jq ".[] | select(.title == env.CONFLICT_TITLE) | .number" 2>/dev/null |
+              while read -r number; do
+                gh issue close "$number" --repo "$GITHUB_REPOSITORY" --comment "Resolved: $1" || true
+              done || true
+          }
+          if [[ $incoming == 0 ]]; then
+            echo "$DEFAULT_BRANCH already contains $UPSTREAM_REPOSITORY@$UPSTREAM_BRANCH ($upstream)."
+            echo "state=up-to-date" >>"$GITHUB_OUTPUT"
+            close_conflict_issue "$DEFAULT_BRANCH contains upstream $upstream."
+            exit 0
+          fi
+          echo "$incoming new upstream commit(s) up to $upstream."
+          if [[ $FORCE != true ]] && git rev-parse -q --verify "refs/remotes/origin/$SYNC_BRANCH" >/dev/null &&
+            [[ "$(git rev-parse "refs/remotes/origin/$SYNC_BRANCH^1" 2>/dev/null)" == "$base" ]] &&
+            [[ "$(git rev-parse "refs/remotes/origin/$SYNC_BRANCH^2" 2>/dev/null)" == "$upstream" ]] &&
+            gh api "repos/$GITHUB_REPOSITORY/commits/$(git rev-parse "refs/remotes/origin/$SYNC_BRANCH")/status" \
+              --jq ".statuses[] | select(.context == env.STATUS_CONTEXT) | .state" 2>/dev/null | grep -Eq '^(success|failure|error)$'; then
+            # An interrupted run leaves no final status and is rebuilt.
+            echo "$SYNC_BRANCH already merges $base and $upstream and has a final gate status (use force to re-run)."
+            echo "state=current" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git switch -c "$SYNC_BRANCH"
+          message="Merge $UPSTREAM_REPOSITORY $UPSTREAM_BRANCH ($(git rev-parse --short "$upstream")) into $DEFAULT_BRANCH"
+          if ! git merge --no-ff --no-edit -m "$message" "$upstream"; then
+            mapfile -t conflicts < <(git diff --name-only --diff-filter=U)
+            git merge --abort
+            echo "state=conflict" >>"$GITHUB_OUTPUT"
+            {
+              echo "The scheduled upstream sync could not merge \`$UPSTREAM_REPOSITORY@$UPSTREAM_BRANCH\` ($upstream) into \`$DEFAULT_BRANCH\` ($base) without conflicts. Nothing was pushed."
+              echo
+              echo "Conflicting files:"
+              echo
+              for file in "${conflicts[@]}"; do echo "- \`$file\`"; done
+              echo
+              echo "Incoming upstream commits: $incoming. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+              echo
+              echo "Resolve locally (see docs/st/UPSTREAM_SYNC.md), for example:"
+              echo
+              echo '```sh'
+              echo "git fetch https://github.com/$UPSTREAM_REPOSITORY.git $UPSTREAM_BRANCH"
+              echo "git switch -c sync/upstream-manual origin/$DEFAULT_BRANCH"
+              echo "git merge FETCH_HEAD"
+              echo '```'
+              echo
+              echo "This issue is updated by each sync run and closed automatically once a merge succeeds."
+            } >conflict.md
+            for file in "${conflicts[@]}"; do echo "::error title=Upstream merge conflict::$file"; done
+            existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "in:title \"$CONFLICT_TITLE\"" --json number,title \
+              --jq '.[] | select(.title == env.CONFLICT_TITLE) | .number' | head -n 1) || existing=failed
+            if [[ $existing == failed ]]; then
+              echo "::error title=Upstream sync conflict issue::Could not read issues; enable Issues for this repository (docs/st/UPSTREAM_SYNC.md)."
+            elif [[ -n $existing ]]; then
+              gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body-file conflict.md
+            else
+              gh issue create --repo "$GITHUB_REPOSITORY" --title "$CONFLICT_TITLE" --body-file conflict.md
+            fi
+            exit 1
+          fi
+          sha=$(git rev-parse HEAD)
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+          # The sync branch is owned by this workflow and rebuilt from the default branch on every run.
+          if ! git push --force "https://x-access-token:$PUSH_TOKEN@github.com/$GITHUB_REPOSITORY.git" "HEAD:refs/heads/$SYNC_BRANCH"; then
+            echo "::error title=Upstream sync push failed::Pushing $SYNC_BRANCH was refused. If upstream changed .github/workflows, GITHUB_TOKEN cannot push it; configure the SLK_UPSTREAM_SYNC_TOKEN secret (docs/st/UPSTREAM_SYNC.md)."
+            exit 1
+          fi
+          echo "state=merged" >>"$GITHUB_OUTPUT"
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$sha" -f state=pending -f context="$STATUS_CONTEXT" \
+            -f description="Quality and end-to-end gates are running" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" >/dev/null
+          close_conflict_issue "$SYNC_BRANCH merges upstream $upstream without conflicts."
+
+  quality:
+    needs: merge
+    if: needs.merge.outputs.state == 'merged'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/quality.yml
+    with:
+      ref: ${{ needs.merge.outputs.sha }}
+
+  e2e:
+    needs: merge
+    if: needs.merge.outputs.state == 'merged'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/st-e2e.yml
+    with:
+      ref: ${{ needs.merge.outputs.sha }}
+
+  report:
+    needs: [merge, quality, e2e]
+    if: always() && needs.merge.outputs.state == 'merged'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      statuses: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.merge.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Publish gate status and open or update the pull request
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.SLK_UPSTREAM_SYNC_TOKEN || github.token }}
+          STATUS_TOKEN: ${{ github.token }}
+          SHA: ${{ needs.merge.outputs.sha }}
+          BASE: ${{ needs.merge.outputs.base }}
+          UPSTREAM: ${{ needs.merge.outputs.upstream }}
+          QUALITY: ${{ needs.quality.result }}
+          E2E: ${{ needs.e2e.result }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          if [[ $QUALITY == success && $E2E == success ]]; then
+            state=success
+            description="Quality and end-to-end gates passed"
+          else
+            state=failure
+            description="Gates: quality $QUALITY, end-to-end $E2E"
+          fi
+          GH_TOKEN=$STATUS_TOKEN gh api "repos/$GITHUB_REPOSITORY/statuses/$SHA" -f state="$state" \
+            -f context="$STATUS_CONTEXT" -f description="$description" -f target_url="$run_url" >/dev/null
+          icon() { [[ $1 == success ]] && echo "passed" || echo "**$1**"; }
+          total=$(git rev-list --count --no-merges "$BASE..$UPSTREAM")
+          {
+            echo "Automated merge of \`$UPSTREAM_REPOSITORY@$UPSTREAM_BRANCH\` into \`$DEFAULT_BRANCH\`."
+            echo
+            echo "| Gate | Result |"
+            echo "| --- | --- |"
+            echo "| Quality checks (\`quality.yml\`) | $(icon "$QUALITY") |"
+            echo "| End-to-end (\`st-e2e.yml\`) | $(icon "$E2E") |"
+            echo
+            echo "Merge commit: \`$SHA\` (main \`${BASE:0:10}\` + upstream \`${UPSTREAM:0:10}\`). Gate run: $run_url"
+            echo
+            echo "### Incoming upstream commits ($total)"
+            echo
+            git log --no-merges --format='- %h %s (%an, %as)' "$BASE..$UPSTREAM" | head -n 150 |
+              sed -e 's/#\([0-9]\)/#\&#8203;\1/g' -e 's/@/@\&#8203;/g'
+            if ((total > 150)); then echo "- ... and $((total - 150)) more"; fi
+            echo
+            echo "### Changed files"
+            echo
+            echo '```'
+            git diff --stat=120 "$BASE...$UPSTREAM" | tail -n 60
+            echo '```'
+            echo
+            echo "Merge with a merge commit (not squash or rebase) so later syncs keep the upstream history. The \`$SYNC_BRANCH\` branch is rebuilt by every sync run; do not commit to it."
+          } >body.md
+          title="Sync upstream $UPSTREAM_BRANCH (${UPSTREAM:0:10})"
+          [[ $state == success ]] || title="$title: gates failing"
+          number=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$SYNC_BRANCH" --base "$DEFAULT_BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [[ -n $number ]]; then
+            gh pr edit "$number" --repo "$GITHUB_REPOSITORY" --title "$title" --body-file body.md
+            gh pr comment "$number" --repo "$GITHUB_REPOSITORY" --body "Sync updated to \`$SHA\`: quality $QUALITY, end-to-end $E2E. $run_url"
+          else
+            number=$(gh pr create --repo "$GITHUB_REPOSITORY" --head "$SYNC_BRANCH" --base "$DEFAULT_BRANCH" --title "$title" --body-file body.md | grep -oP '/pull/\K\d+')
+          fi
+
+          # Enable auto-merge if gates passed and token is available
+          if [[ $state == success ]] && [[ -n ${SLK_UPSTREAM_SYNC_TOKEN:-} ]] && [[ -n $number ]]; then
+            if gh pr merge "$number" --repo "$GITHUB_REPOSITORY" --auto --merge 2>&1 | tee /tmp/automerge.log; then
+              echo "Auto-merge enabled on PR #$number"
+            else
+              if grep -q "pull request is in clean status" /tmp/automerge.log || grep -q "auto-merge is already enabled" /tmp/automerge.log; then
+                echo "Auto-merge already enabled or PR is ready to merge"
+              else
+                echo "::warning title=Auto-merge failed::Could not enable auto-merge on PR #$number. See run logs."
+              fi
+            fi
+          elif [[ $state == success ]] && [[ -z ${SLK_UPSTREAM_SYNC_TOKEN:-} ]]; then
+            echo "::notice title=Auto-merge skipped::Gates passed but SLK_UPSTREAM_SYNC_TOKEN is not configured. PR #$number left open for manual merge."
+          fi
+
+          if [[ $state != success ]]; then
+            echo "::error title=Upstream sync gates failed::quality $QUALITY, end-to-end $E2E"
+            exit 1
+          fi

@@ -370,7 +370,8 @@ const router = useRouter();
 const baseUrl = useRuntimeConfig().public.stadtlandzahlBaseUrl;
 const { data: dataPageConfig } = await useDataPageConfig();
 const underConstruction = computed(() => dataPageConfig.value.under_construction);
-const manifestError = ref(false);
+// Set while the SSR handler runs; useState serialises it so hydration renders the same message.
+const manifestError = useState("data-overview-manifest-error", () => false);
 const { data: collections } = await useAsyncData(
   "data-overview-collections",
   async () => {

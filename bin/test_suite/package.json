@@ -53,7 +53,14 @@
     "test:data-page": "tsx --test src/dataPageDelivery.test.ts src/municipalityOverview.test.ts src/overviewPagination.test.ts",
     "test:feedback-followup": "tsx src/feedbackFollowupSmoke.ts",
     "test:runtime-environment": "tsx --test src/runtimeEnvironment.test.ts && cd ../../podman/environment && go test ./...",
-    "test:bootstrap": "tsx src/bootstrapRuntime.ts"
+    "test:bootstrap": "tsx src/bootstrapRuntime.ts",
+    "test:st:unit": "tsx --test src/st/*.test.ts",
+    "st:seed": "tsx src/st/seedDemoContent.ts",
+    "st:import-idempotency": "tsx src/st/importIdempotency.ts",
+    "st:permissions": "tsx src/st/permissionBoundaries.ts",
+    "st:contracts": "tsx src/st/apiContracts.ts",
+    "st:crawl": "tsx src/st/publicRoutes.browser.ts",
+    "st:interactions": "tsx src/st/interactions.browser.ts"
   },
   "dependencies": {
     "@playwright/test": "^1.65.0",

@@ -19,12 +19,46 @@ export async function launchBrowser(headless: boolean): Promise<Browser> {
 }
 
 export async function newContext(browser: Browser, options: BrowserContextOptions = {}): Promise<BrowserContext> {
-  return browser.newContext({
+  const context = await browser.newContext({
     locale: "de-DE",
     viewport: { width: 1440, height: 1000 },
     ignoreHTTPSErrors: true,
     ...options,
   });
+  await routeOfflineBasemap(context);
+  return context;
+}
+
+/** Neutral stand-ins for CARTO basemap proxy assets (tiles, sprites, glyphs). */
+export function offlineBasemapResponse(url: URL): { contentType: string; body: Buffer | string } | null {
+  if (url.pathname !== "/api/carto-basemap") return null;
+  const asset = url.searchParams.get("asset") ?? "";
+  if (asset.endsWith(".png"))
+    return {
+      contentType: "image/png",
+      body: Buffer.from(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
+        "base64",
+      ),
+    };
+  if (asset.endsWith(".json")) return { contentType: "application/json", body: "{}" };
+  if (asset.endsWith(".pbf")) return { contentType: "application/x-protobuf", body: "" };
+  return null;
+}
+
+/** Offline CI only (SLK_TEST_OFFLINE_BASEMAP=1): the CARTO basemap proxy needs a paid key
+ * and internet access, so its assets are replaced by neutral fixtures. Handlers registered
+ * later must use route.fallback() to reach it. Deployed checks never set this variable.
+ */
+export async function routeOfflineBasemap(context: BrowserContext): Promise<void> {
+  if (process.env.SLK_TEST_OFFLINE_BASEMAP !== "1") return;
+  await context.route(
+    (url) => url.pathname === "/api/carto-basemap",
+    async (route) => {
+      const fixture = offlineBasemapResponse(new URL(route.request().url()));
+      return fixture ? route.fulfill({ status: 200, ...fixture }) : route.fallback();
+    },
+  );
 }
 
 export async function visibleText(page: Page): Promise<string> {
