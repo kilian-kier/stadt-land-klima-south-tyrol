@@ -112,6 +112,11 @@ dpkg --compare-versions "${VERSION_ID:-0}" ge 26.04 ||
 [[ -d /run/systemd/system ]] || die "systemd is required"
 [[ "$(cat /sys/module/apparmor/parameters/enabled 2> /dev/null)" == Y ]] || die "AppArmor must be enabled"
 [[ "$(stat -fc %T /sys/fs/cgroup)" == cgroup2fs ]] || die "cgroup v2 is required"
+# After a release upgrade the new kernel and core services only run after a reboot; until then the
+# deployment account's systemd user manager does not start ("The user manager of deploy did not start").
+newest_kernel="$(find /boot -maxdepth 1 -name 'vmlinuz-*' -printf '%f\n' 2> /dev/null | sed 's/^vmlinuz-//' | sort -V | tail -n 1)"
+[[ -z "$newest_kernel" || "$(uname -r)" == "$newest_kernel" ]] ||
+  die "The running kernel $(uname -r) is older than the installed $newest_kernel. Reboot first, then run the bootstrap again."
 
 root_checkout="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 st_dir="$root_checkout/deploy/st"
@@ -455,7 +460,9 @@ if [[ -n "$archive" && -n "$manifest" ]]; then
   log "Starting the stack as $deploy_user with prebuilt images (2GB server never builds)"
   [[ -f "$archive" && -f "$manifest" ]] || die "Prebuilt archive or manifest not found"
   # Copy archive and manifest to deploy user's home
-  deploy_tmp="$(as_deploy mktemp -d)"
+  # Not /tmp: Ubuntu 26.04 mounts it as tmpfs (half the RAM), too small for a release archive.
+  as_deploy mkdir -p "$deploy_home/.cache"
+  deploy_tmp="$(as_deploy mktemp -d "$deploy_home/.cache/slk-st-bootstrap.XXXXXX")"
   install -o "$deploy_user" -g "$deploy_user" -m 0600 "$archive" "$deploy_tmp/release.tar.zst"
   install -o "$deploy_user" -g "$deploy_user" -m 0600 "$manifest" "$deploy_tmp/release.manifest.json"
   (cd / && as_deploy bash /usr/local/libexec/slk-st/first-start "$deploy_tmp/release.tar.zst" "$deploy_tmp/release.manifest.json")
