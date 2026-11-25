@@ -4,8 +4,10 @@
 # (private service identities) with upstream's CLI. Each completed step is recorded, so an
 # interrupted bootstrap resumes where it stopped. An initialized stack is never re-initialized.
 #
-# Usage: first-start.sh [archive] [manifest]
+# Usage: first-start.sh [archive] [manifest] [snapshot]
 #   If archive and manifest are provided, loads prebuilt images instead of building (2GB server).
+#   A snapshot (deploy-command snapshot, staging only) replaces the empty database and uploads
+#   before the configuration import, so the import migrates it like a release would.
 set -Eeuo pipefail
 # Name the failing command; the text is unexpanded, so no private values are printed.
 trap 'slk_status=$?; echo "${BASH_SOURCE[0]##*/}: line $LINENO: \"$BASH_COMMAND\" failed with status $slk_status" >&2' ERR
@@ -19,6 +21,7 @@ user_runtime_environment
 # Optional prebuilt images
 prebuilt_archive="${1:-}"
 prebuilt_manifest="${2:-}"
+snapshot="${3:-}"
 
 state="$HOME/.local/state/slk-st"
 private="$state/private"
@@ -107,6 +110,41 @@ if ! done_step data; then
   mark_step data
 fi
 wait_healthy "${project}_db_1"
+
+if [[ -n "$snapshot" ]] && ! done_step snapshot; then
+  log "Restoring the anonymized snapshot"
+  [[ -f "$snapshot" ]] || die "Snapshot $snapshot not found"
+  snapshot_dir="$(mktemp -d "$state/snapshot.XXXXXX")"
+  tar -xf "$snapshot" -C "$snapshot_dir" manifest.json database.dump uploads.tar
+  log "Snapshot: $(cat "$snapshot_dir/manifest.json")"
+  database="$(private_value "$directus_env" DB_DATABASE)"
+  [[ "$database" =~ ^[A-Za-z0-9_]{1,63}$ ]] || die "Unexpected database name"
+  in_db() {
+    pm exec -i "${project}_db_1" sh -ec 'if command -v slk-env >/dev/null 2>&1; then exec slk-env sh -ec "$1" st-restore "$2"; fi; exec sh -ec "$1" st-restore "$2"' \
+      st-restore "$1" "$database"
+  }
+  # The new database only holds what the image created on initialization; start from template0.
+  in_db 'exec psql -X -q -v ON_ERROR_STOP=1 -U "${POSTGRES_USER:?}" -d postgres -c "DROP DATABASE IF EXISTS \"$1\"" -c "CREATE DATABASE \"$1\" TEMPLATE template0"'
+  in_db 'exec pg_restore -U "${POSTGRES_USER:?}" -d "$1" --no-owner --no-acl --exit-on-error' < "$snapshot_dir/database.dump"
+  # Every account of the snapshot is anonymized. The configuration import and the service
+  # identities authenticate as this stack's own administrator, as on a fresh stack.
+  admin_email="$(private_value "$directus_env" ADMIN_EMAIL)"
+  admin_token="$(private_value "$directus_env" CLI_DIRECTUS_STATIC_TOKEN)"
+  [[ "$admin_email" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+$ && "$admin_token" =~ ^[A-Za-z0-9_-]{32,255}$ ]] ||
+    die "Unexpected administrator settings"
+  admin="$(printf "INSERT INTO directus_users (id, email, status, role, token)
+    SELECT gen_random_uuid(), '%s', 'active', a.role, '%s' FROM directus_access a
+    JOIN directus_policies p ON p.id = a.policy WHERE p.admin_access AND a.role IS NOT NULL
+    ORDER BY a.role LIMIT 1 RETURNING id;\n" "$admin_email" "$admin_token" |
+    in_db 'exec psql -X -q -At -v ON_ERROR_STOP=1 -U "${POSTGRES_USER:?}" -d "$1" -f -')"
+  unset admin_token
+  [[ "$admin" =~ ^[0-9a-f-]{36}$ ]] || die "The snapshot has no administrator role"
+  log "Staging administrator $admin_email added"
+  pm volume exists "${project}_uploads" || pm volume create "${project}_uploads" > /dev/null
+  pm volume import "${project}_uploads" "$snapshot_dir/uploads.tar"
+  rm -rf "$snapshot_dir"
+  mark_step snapshot
+fi
 
 if ! done_step schema; then
   log "Importing the code-first configuration through the unpublished core-only helper"

@@ -318,6 +318,10 @@ jobs:
         timeout-minutes: 8
         if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
         run: src/st/ci-step.sh cms-cli npm run test:cli
+      - name: Staging snapshot anonymization
+        timeout-minutes: 8
+        if: ${{ !cancelled() && steps.stack.outcome == 'success' }}
+        run: src/st/ci-step.sh staging-snapshot bash src/st/snapshot-anonymization.sh
       - name: Collect memory peaks
         if: always()
         run: |

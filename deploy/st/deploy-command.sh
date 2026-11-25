@@ -7,6 +7,8 @@
 #   deploy <commit>    deploy a full 40-hex commit contained in origin/<branch>
 #   rollback <commit>  roll the active release <commit> back to its recorded predecessor
 #   wait <commit>      reattach to the latest run for <commit> and return its result
+#   snapshot           stream an anonymized copy of the data for staging (snapshot.sh); the
+#                      staging key runs "deploy-command --snapshot-only", which allows only this
 #   status             print the active release and recent runs
 #
 # Releases use upstream's protocol (bin/slk release backup|stage|activate|rollback).
@@ -31,7 +33,7 @@ mkdir -p "$runs" "$state/releases"
 chmod 700 "$state" "$runs"
 
 usage() {
-  echo "Usage: upload <40-hex commit> <64-hex sha256> | deploy <40-hex commit> | rollback <40-hex commit> | wait <40-hex commit> | status" >&2
+  echo "Usage: upload <40-hex commit> <64-hex sha256> | deploy <40-hex commit> | rollback <40-hex commit> | wait <40-hex commit> | snapshot | status" >&2
   exit 2
 }
 
@@ -374,6 +376,18 @@ follow() {
   return "$(< "$runs/$id.exit")"
 }
 
+# Anonymized copy of the production data for a staging environment (docs/st/STAGING.md), as a
+# tar stream on stdout. Production is only read; snapshot.sh anonymizes a temporary copy.
+do_snapshot() {
+  local db database
+  cd "$SLK_ST_CHECKOUT"
+  [[ -f "$state/initialized" ]] || die "The stack was not initialized by bootstrap-ubuntu.sh" 4
+  db="$(pm ps -q --filter "label=io.podman.compose.project=$project" --filter label=io.podman.compose.service=db)"
+  [[ "$db" =~ ^[0-9a-f]{12,64}$ ]] || die "Expected one running database container" 4
+  database="$(private_value "$SLK_ST_CHECKOUT/src/directus/.env" DB_DATABASE)"
+  bash "$SLK_ST_LIBEXEC/snapshot.sh" "$db" "$database" "${project}_uploads" "$state" < /dev/null
+}
+
 status() {
   local active
   active="$(cat "$state/active" 2> /dev/null || echo none)"
@@ -387,6 +401,10 @@ status() {
 
 if [[ "${1:-}" == --worker && $# == 4 ]]; then
   worker "$2" "$3" "$4"
+fi
+if [[ "${1:-}" == --snapshot-locked && $# == 1 ]]; then
+  do_snapshot
+  exit
 fi
 if [[ "${1:-}" == --upload-locked && $# == 3 && "$2" =~ ^[0-9a-f]{40}$ && "$3" =~ ^[0-9a-f]{64}$ ]]; then
   do_upload "$2" "$3"
@@ -402,7 +420,11 @@ if [[ "${1:-}" == --locked && $# == 3 ]]; then
   exit 0
 fi
 
-if [[ -n "${SSH_ORIGINAL_COMMAND+set}" ]]; then
+if [[ "${1:-}" == --snapshot-only && $# == 1 ]]; then
+  # The staging key's forced command: snapshots and nothing else.
+  [[ "${SSH_ORIGINAL_COMMAND:-}" == snapshot ]] || { log "ERROR: This key may only request a snapshot" >&2; exit 3; }
+  request=snapshot
+elif [[ -n "${SSH_ORIGINAL_COMMAND+set}" ]]; then
   request="$SSH_ORIGINAL_COMMAND"
 else
   request="$*"
@@ -411,6 +433,13 @@ fi
 if [[ "$request" == status ]]; then
   status
   exit 0
+fi
+# snapshot streams the anonymized copy on stdout and holds the deployment lock while it runs.
+if [[ "$request" == snapshot ]]; then
+  status=0
+  flock --nonblock --close --conflict-exit-code 75 "$state/deploy.lock" "$self" --snapshot-locked || status=$?
+  ((status != 75)) || log "ERROR: A deployment, rollback or upload is running; try again later" >&2
+  exit "$status"
 fi
 # upload is synchronous: stdin carries the archive, the request names its sha256. It holds the
 # deployment lock so that it cannot change images or volumes while a release runs.

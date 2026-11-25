@@ -75,6 +75,18 @@ retry_url() {
   curl --fail --silent --show-error --output /dev/null --connect-timeout 3 --max-time 15 "$@" "$url"
 }
 
+# Like retry_url, but waits for one specific HTTP status.
+retry_status() {
+  local url="$1" expected="$2" attempts="$3" i
+  shift 3
+  for ((i = 1; i <= attempts; i++)); do
+    [[ "$(curl --silent --output /dev/null --write-out '%{http_code}' --connect-timeout 3 --max-time 15 "$@" "$url" 2>/dev/null)" == "$expected" ]] &&
+      return 0
+    sleep 3
+  done
+  return 1
+}
+
 # Application readiness on loopback, then through the local public gateway with
 # normal TLS verification (a private gateway CA is used only when configured).
 check_health() {
@@ -91,7 +103,12 @@ check_health() {
       host="${origin#https://}"
       host="${host%%/*}"
       log "Health: gateway $origin"
-      retry_url "$origin" 40 --resolve "$host:443:127.0.0.1" "${tls[@]}" || return 1
+      if [[ "$origin" == "$SLK_ST_SITE_ORIGIN/" && "${SLK_ST_SITE_PROTECTED:-false}" == true ]]; then
+        # A password-protected website (staging) must refuse requests without it.
+        retry_status "$origin" 401 40 --resolve "$host:443:127.0.0.1" "${tls[@]}" || return 1
+      else
+        retry_url "$origin" 40 --resolve "$host:443:127.0.0.1" "${tls[@]}" || return 1
+      fi
     done
   fi
 }

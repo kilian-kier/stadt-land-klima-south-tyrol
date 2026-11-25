@@ -26,10 +26,14 @@ Usage: bootstrap-ubuntu.sh --site-host HOST --cms-host HOST --admin-email EMAIL
   --deploy-user NAME         Dedicated rootless deployment account (default: deploy)
   --project NAME             Podman project name (default: slk-podman-production)
   --ci-public-key FILE       Public key of the CI deployment key (restricted forced command)
+  --snapshot-public-key FILE Public key for staging, which may only request anonymized snapshots
   --ci-from PATTERNS         Optional sshd from= patterns for the CI key (comma-separated)
   --ssh-port PORT            SSH port opened in the firewall (default: 22)
   --archive FILE             Prebuilt release archive (tar.zst) to load instead of building
   --manifest FILE            Release manifest JSON for the archive
+  --snapshot FILE            Start a new stack with this anonymized snapshot (staging only)
+  --site-password-file FILE  Protect the website with this password (user "staging") and
+                             mark it noindex (staging only)
   --restic-repository REPO   Off-host Restic repository for nightly backups
   --restic-password-file F   Existing Restic password file (default: generated)
   --release-offsite          Also copy every release checkpoint off-host with Restic
@@ -58,7 +62,7 @@ die() {
 }
 
 site_host="" cms_host="" admin_email="" tls="" repo_url="" branch=main deploy_user=deploy
-project=slk-podman-production ci_key="" ci_from="" ssh_port=22 archive="" manifest=""
+project=slk-podman-production ci_key="" snapshot_key="" ci_from="" ssh_port=22 archive="" manifest="" snapshot="" site_password=""
 restic_repository="" restic_password_file="" release_offsite=none firewall=true cloudflare=false
 while (($#)); do
   case "$1" in
@@ -72,10 +76,13 @@ while (($#)); do
     --deploy-user) deploy_user="${2:?}"; shift 2 ;;
     --project) project="${2:?}"; shift 2 ;;
     --ci-public-key) ci_key="${2:?}"; shift 2 ;;
+    --snapshot-public-key) snapshot_key="${2:?}"; shift 2 ;;
     --ci-from) ci_from="${2:?}"; shift 2 ;;
     --ssh-port) ssh_port="${2:?}"; shift 2 ;;
     --archive) archive="${2:?}"; shift 2 ;;
     --manifest) manifest="${2:?}"; shift 2 ;;
+    --snapshot) snapshot="${2:?}"; shift 2 ;;
+    --site-password-file) site_password="${2:?}"; shift 2 ;;
     --restic-repository) restic_repository="${2:?}"; shift 2 ;;
     --restic-password-file) restic_password_file="${2:?}"; shift 2 ;;
     --release-offsite) release_offsite=restic; shift ;;
@@ -133,13 +140,20 @@ check_root_owned "$root_checkout"
 revision="$(git -C "$root_checkout" rev-parse HEAD)"
 [[ -n "$repo_url" ]] || repo_url="$(git -C "$root_checkout" remote get-url origin)"
 [[ "$repo_url" =~ ^(https://|ssh://|git@|/)[A-Za-z0-9._@:/+-]+$ ]] || die "Unsupported --repo-url"
-if [[ -n "$ci_key" ]]; then
-  [[ -f "$ci_key" ]] || die "--ci-public-key $ci_key does not exist"
-  ci_key_line="$(head -n 1 "$ci_key")"
-  [[ "$ci_key_line" =~ ^(ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521|sk-ssh-ed25519@openssh.com)\ ([A-Za-z0-9+/=]+)(\ .*)?$ ]] ||
-    die "The CI key must be a single Ed25519 or ECDSA public key"
-  ci_key_line="${BASH_REMATCH[1]} ${BASH_REMATCH[2]}"
-fi
+# Prints "<type> <key>" of a file with a single Ed25519 or ECDSA public key; $2 names the option.
+public_key_line() {
+  local line
+  [[ -f "$1" ]] || die "$2 $1 does not exist"
+  line="$(head -n 1 "$1")"
+  [[ "$line" =~ ^(ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521|sk-ssh-ed25519@openssh.com)\ ([A-Za-z0-9+/=]+)(\ .*)?$ ]] ||
+    die "$2 must be a single Ed25519 or ECDSA public key"
+  printf '%s %s' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+}
+ci_key_line="" snapshot_key_line=""
+[[ -z "$ci_key" ]] || ci_key_line="$(public_key_line "$ci_key" --ci-public-key)"
+[[ -z "$snapshot_key" ]] || snapshot_key_line="$(public_key_line "$snapshot_key" --snapshot-public-key)"
+[[ -z "$snapshot_key_line" || "$snapshot_key_line" != "$ci_key_line" ]] ||
+  die "The snapshot key must differ from the CI deployment key"
 node_version="$(tr -d '[:space:]' < "$root_checkout/.node-version")"
 node_version="${node_version#v}"
 read_pin() { sed -nE "s/^ *$1: \"([0-9a-f]{64}|[0-9.]+)\",?$/\\1/p" "$root_checkout/bin/cli/host-maintenance.ts"; }
@@ -362,6 +376,8 @@ log "Installing the st deployment scripts"
 install -d -o root -g root -m 0755 /usr/local/libexec/slk-st /etc/slk-st
 install -o root -g root -m 0644 "$st_dir/lib.sh" /usr/local/libexec/slk-st/lib.sh
 install -o root -g root -m 0644 "$st_dir/private-config.mts" /usr/local/libexec/slk-st/private-config.mts
+install -o root -g root -m 0644 "$st_dir/anonymize-snapshot.mts" /usr/local/libexec/slk-st/anonymize-snapshot.mts
+install -o root -g root -m 0644 "$st_dir/snapshot.sh" /usr/local/libexec/slk-st/snapshot.sh
 install -o root -g root -m 0755 "$st_dir/deploy-command.sh" /usr/local/libexec/slk-st/deploy-command
 install -o root -g root -m 0755 "$st_dir/first-start.sh" /usr/local/libexec/slk-st/first-start
 checkout="$deploy_home/stadt-land-klima"
@@ -380,6 +396,7 @@ SLK_ST_SITE_ORIGIN=https://$site_host
 SLK_ST_CMS_ORIGIN=https://$cms_host
 SLK_ST_OFFSITE=$release_offsite
 SLK_ST_GATEWAY_CA=$gateway_ca
+SLK_ST_SITE_PROTECTED=$([[ -n "$site_password" ]] && echo true || echo false)
 EOF
 
 # --- Deployment checkout and private configuration --------------------------------
@@ -465,7 +482,13 @@ if [[ -n "$archive" && -n "$manifest" ]]; then
   deploy_tmp="$(as_deploy mktemp -d "$deploy_home/.cache/slk-st-bootstrap.XXXXXX")"
   install -o "$deploy_user" -g "$deploy_user" -m 0600 "$archive" "$deploy_tmp/release.tar.zst"
   install -o "$deploy_user" -g "$deploy_user" -m 0600 "$manifest" "$deploy_tmp/release.manifest.json"
-  (cd / && as_deploy bash /usr/local/libexec/slk-st/first-start "$deploy_tmp/release.tar.zst" "$deploy_tmp/release.manifest.json")
+  snapshot_copy=()
+  if [[ -n "$snapshot" ]]; then
+    [[ -f "$snapshot" ]] || die "--snapshot $snapshot does not exist"
+    install -o "$deploy_user" -g "$deploy_user" -m 0600 "$snapshot" "$deploy_tmp/snapshot.tar"
+    snapshot_copy=("$deploy_tmp/snapshot.tar")
+  fi
+  (cd / && as_deploy bash /usr/local/libexec/slk-st/first-start "$deploy_tmp/release.tar.zst" "$deploy_tmp/release.manifest.json" "${snapshot_copy[@]}")
   as_deploy rm -rf "$deploy_tmp"
 else
   log "Starting the stack as $deploy_user (first start builds all images; this takes a while)"
@@ -499,6 +522,28 @@ if [[ "$cloudflare" == true ]]; then
 else
   rm -f /etc/caddy/servers.d/cloudflare.caddy
 fi
+# Global additions of deploy/st/Caddyfile ("import global.d/*.caddy"). With the private CA
+# (staging behind tunnels), connections to the address without a server name get the website's
+# certificate.
+install -d -o root -g caddy -m 0750 /etc/caddy/global.d
+if [[ "$tls" == internal ]]; then
+  printf 'default_sni %s\n' "$site_host" | put 0640 /etc/caddy/global.d/default-sni.caddy
+  chgrp caddy /etc/caddy/global.d/default-sni.caddy
+else
+  rm -f /etc/caddy/global.d/default-sni.caddy
+fi
+# Website-only additions of deploy/st/Caddyfile ("import site.d/*.caddy").
+install -d -o root -g caddy -m 0750 /etc/caddy/site.d
+if [[ -n "$site_password" ]]; then
+  [[ -s "$site_password" ]] || die "--site-password-file $site_password is missing or empty"
+  hash="$(head -n 1 "$site_password" | /usr/local/bin/caddy hash-password)"
+  [[ "$hash" =~ ^\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}$ ]] || die "Hashing the website password failed"
+  printf 'basic_auth {\n\tstaging %s\n}\nheader X-Robots-Tag "noindex, nofollow"\n' "$hash" |
+    put 0640 /etc/caddy/site.d/staging.caddy
+  chgrp caddy /etc/caddy/site.d/staging.caddy
+else
+  rm -f /etc/caddy/site.d/staging.caddy
+fi
 runuser -u caddy -- env SLK_CADDY_SITE_HOST="$site_host" SLK_CADDY_CMS_HOST="$cms_host" \
   SLK_CADDY_WEBSITE_ORIGIN="https://$site_host" SLK_CADDY_CMS_ORIGIN="https://$cms_host" SLK_CADDY_TLS="$tls" \
   XDG_DATA_HOME=/var/lib/caddy XDG_CONFIG_HOME=/var/lib/caddy \
@@ -517,7 +562,8 @@ fi
   caddy/Containerfile podman/host-backup.timer podman/slk-application-only.service.example \
   bin/cli/host-backup.ts bin/cli/host-configuration.ts bin/cli/cloud-retention.ts bin/cli/release-retention.ts \
   bin/cli/image-retention.ts deploy/st/Caddyfile deploy/st/lib.sh deploy/st/private-config.mts \
-  deploy/st/deploy-command.sh deploy/st/first-start.sh deploy/st/host-install.mts deploy/st/cloudflare-ips.txt) |
+  deploy/st/deploy-command.sh deploy/st/first-start.sh deploy/st/host-install.mts deploy/st/cloudflare-ips.txt \
+  deploy/st/snapshot.sh deploy/st/anonymize-snapshot.mts) |
   put 0644 /etc/slk-st/host-files.sha256
 printf '%s\n' "$revision" | put 0644 /etc/slk-st/host-revision
 
@@ -526,16 +572,23 @@ log "Checking the public gateway on this host"
   die "The application is not reachable through the gateway"
 
 # --- Restricted CI access ---------------------------------------------------------
-if [[ -n "$ci_key" ]]; then
-  log "Installing the restricted CI deployment key"
-  options='restrict,command="/usr/local/libexec/slk-st/deploy-command"'
+# Replaces the authorized key line named $1 by key $3 with the forced command $2.
+authorize_key() {
+  local options="restrict,command=\"$2\"" keys="$deploy_home/.ssh/authorized_keys"
   [[ -n "$ci_from" ]] && options+=",from=\"$ci_from\""
   as_deploy install -d -m 0700 "$deploy_home/.ssh"
-  keys="$deploy_home/.ssh/authorized_keys"
   as_deploy touch "$keys"
   chmod 600 "$keys"
-  as_deploy bash -c 'grep -v " slk-st-ci$" "$1" > "$1.new" || true; printf "%s\n" "$2" >> "$1.new"; chmod 600 "$1.new"; mv "$1.new" "$1"' \
-    _ "$keys" "$options $ci_key_line slk-st-ci"
+  as_deploy bash -c 'grep -v " $3$" "$1" > "$1.new" || true; printf "%s\n" "$2" >> "$1.new"; chmod 600 "$1.new"; mv "$1.new" "$1"' \
+    _ "$keys" "$options $3 $1" "$1"
+}
+if [[ -n "$ci_key" ]]; then
+  log "Installing the restricted CI deployment key"
+  authorize_key slk-st-ci /usr/local/libexec/slk-st/deploy-command "$ci_key_line"
+fi
+if [[ -n "$snapshot_key" ]]; then
+  log "Installing the staging key (anonymized snapshots only)"
+  authorize_key slk-st-snapshot "/usr/local/libexec/slk-st/deploy-command --snapshot-only" "$snapshot_key_line"
 fi
 
 host_key="$(cut -d' ' -f1,2 /etc/ssh/ssh_host_ed25519_key.pub)"

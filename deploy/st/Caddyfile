@@ -3,8 +3,14 @@
 #   SLK_CADDY_SITE_HOST / SLK_CADDY_CMS_HOST  public website and isolated CMS hostnames
 #   SLK_CADDY_WEBSITE_ORIGIN / SLK_CADDY_CMS_ORIGIN  the same values as https:// origins
 #   SLK_CADDY_TLS  ACME contact email for public certificates, or "internal" for a private CA
+# Website-only additions (staging: password and noindex, docs/st/STAGING.md) go to the
+# root-owned /etc/caddy/site.d/*.caddy; production has none.
 # The shared routing, security and rate-limit rules are the maintained upstream snippets.
-import global.future.caddy
+# Upstream's global.future.caddy plus root-owned host additions in /etc/caddy/global.d.
+{
+	import global-options.caddy
+	import global.d/*.caddy
+}
 import application.caddy
 import directus.caddy
 
@@ -16,6 +22,7 @@ https://{$SLK_CADDY_SITE_HOST} {
 	tls {$SLK_CADDY_TLS} {
 		protocols tls1.2 tls1.3
 	}
+	import site.d/*.caddy
 	import legacy-cms.caddy
 	import slk_application
 }
