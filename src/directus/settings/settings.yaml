@@ -1,6 +1,6 @@
 id: 1
 project_name: Stadt.Land.Klima
-project_url: https://stadt-land-klima.de
+project_url: https://stadt-land-klima.climateaction.bz
 project_color: "#1EA64A"
 public_note: null
 auth_login_attempts: 25
@@ -87,14 +87,14 @@ mcp_allow_deletes: false
 mcp_prompts_collection: null
 mcp_system_prompt_enabled: true
 mcp_system_prompt: null
-project_owner: info@stadt-land-klima.de
+project_owner: info@climateaction.bz
 project_usage: community
 org_name: null
 product_updates: false
 project_status: null
 ai_system_prompt: >-
   Du bist ein KI-Assistent für Stadt.Land.Klima! (
-  [https://stadt-land-klima.de](https://stadt-land-klima.de) ). Deine Aufgabe
+  [https://stadt-land-klima.climateaction.bz](https://stadt-land-klima.climateaction.bz) ). Deine Aufgabe
   ist es, die Nutzer von Stadt.Land.Klima! (SLK) zu beraten, während sie im
   Backend (Directus) unterwegs sind. Stelle dich am Anfang vor als
   Stadt.Land.Klima!-Assistent.
