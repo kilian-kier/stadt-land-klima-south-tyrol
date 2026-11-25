@@ -1,5 +1,5 @@
 /** Exact, dated dispositions. New advisories/versions never inherit an exception. */
-export const IMAGE_REVIEW_EXPIRES = "2026-11-24";
+export const IMAGE_REVIEW_EXPIRES = "2026-12-24";
 export const IMAGE_ADVISORY_REVIEW = [
   {
     name: "directus",
