@@ -3,7 +3,7 @@
 export const seoMessages = {
   "de-DE": {
     "seo.data.area_description": "Klimadaten und Maßnahmen-Bewertungen für :name – entdecke Fortschritte und Handlungsmöglichkeiten für den kommunalen Klimaschutz.",
-    "seo.data.description": "Entdecke Klimadaten und Maßnahmen-Bewertungen für Kommunen und Regionen in Deutschland.",
+    "seo.data.description": "Entdecke Klimadaten und Maßnahmen-Bewertungen für Kommunen und Regionen in Südtirol.",
     "seo.data.title": "Klimadaten für :name",
     "seo.description": "Wie steht deine Kommune beim Klimaschutz da? Entdecke unabhängige Bewertungen, konkrete Maßnahmen, Klima-Wahlchecks und erfolgreiche Projekte bei Stadt.Land.Klima!",
     "seo.events.description": "Entdecke Veranstaltungen, Workshops und Austausch rund um wirksamen kommunalen Klimaschutz.",
@@ -27,7 +27,7 @@ export const seoMessages = {
   },
   "en-GB": {
     "seo.data.area_description": "Climate data and assessments of climate measures for :name: explore progress and opportunities for municipal climate action.",
-    "seo.data.description": "Explore climate data and assessments of climate measures for municipalities and regions in Germany.",
+    "seo.data.description": "Explore climate data and assessments of climate measures for municipalities and regions in South Tyrol.",
     "seo.data.title": "Climate data for :name",
     "seo.description": "How is your municipality doing on climate action? Explore independent assessments, practical measures, climate election checks and successful projects with Stadt.Land.Klima!",
     "seo.events.description": "Discover events, workshops and opportunities to exchange ideas on effective municipal climate action.",
@@ -51,7 +51,7 @@ export const seoMessages = {
   },
   "it-IT": {
     "seo.data.area_description": "Dati climatici e valutazioni delle misure per :name: scopri progressi e opportunità per la protezione del clima nel comune.",
-    "seo.data.description": "Esplora dati climatici e valutazioni delle misure per i comuni e le regioni della Germania.",
+    "seo.data.description": "Esplora dati climatici e valutazioni delle misure per i comuni e le regioni dell'Alto Adige.",
     "seo.data.title": "Dati climatici per :name",
     "seo.description": "A che punto è il tuo comune nella protezione del clima? Scopri valutazioni indipendenti, misure concrete, confronti elettorali sul clima e progetti di successo con Stadt.Land.Klima!",
     "seo.events.description": "Scopri eventi, laboratori e occasioni di confronto sulla protezione del clima nei comuni.",
