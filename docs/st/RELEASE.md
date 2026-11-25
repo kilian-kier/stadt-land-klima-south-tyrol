@@ -13,14 +13,18 @@ for one commit of `main`. The server itself is described in [DEPLOYMENT.md](DEPL
    and build time are baked in and served by `GET /api/version`.
 3. **quality** and **e2e**, in parallel with the build: upstream's quality gate and the full-stack
    suite (`st-e2e.yml`, about 30 minutes) on exactly that commit. See [TESTING.md](TESTING.md).
-4. **production:** waits for your approval in the `production` environment. It then uploads the
+4. **staging** (when the variable `ST_STAGING` is `true`): serves the same artifact with an
+   anonymized copy of the production data under temporary password-protected addresses, shown on
+   the run page ("View deployment"), until production has finished. See [STAGING.md](STAGING.md).
+5. **production:** waits for your approval in the `production` environment and, with staging, for
+   the staging smoke checks. It then uploads the
    artifact to the server, deploys it (backup → stage → activate, automatic rollback on failure) and
    runs the public smoke checks, which require `/api/version` to report the released commit. If the
    smoke checks fail, it rolls the server back to the previous release.
-5. **record:** moves the `production` branch to the released commit, tags it `release-YYYYMMDD-N`
+6. **record:** moves the `production` branch to the released commit, tags it `release-YYYYMMDD-N`
    and writes a summary with the changes since the previous release.
 
-Until the repository variable `ST_PRODUCTION_DEPLOY` is `true`, steps 4 and 5 are skipped and the
+Until the repository variable `ST_PRODUCTION_DEPLOY` is `true`, steps 5 and 6 are skipped and the
 run ends after a successful build and test ("Deployment skipped").
 
 ## Which version is live
@@ -28,6 +32,7 @@ run ends after a successful build and test ("Deployment skipped").
 | Question                                     | Where                                                          |
 | -------------------------------------------- | -------------------------------------------------------------- |
 | What is in production?                       | the `production` branch, or Deployments on the repository page |
+| What was staged last?                        | the `staging` branch; the address is in that run's summary     |
 | What would the next release contain?         | `compare/production...main`                                    |
 | What is really running?                      | `https://<site>/api/version`                                   |
 | When was what released, and who approved it? | Deployments history, `release-*` tags                          |
@@ -47,9 +52,3 @@ run ends after a successful build and test ("Deployment skipped").
 
 Every Saturday night upstream's `main` is merged, tested and proposed as a pull request; see
 [UPSTREAM_SYNC.md](UPSTREAM_SYNC.md). Merging it does not deploy anything. Release when you are ready.
-
-## Planned (second stage)
-
-A staging site on a GitHub runner with an anonymized copy of the production data, reachable through
-a password-protected temporary address while the release waits for approval, plus a `staging` pointer
-branch.

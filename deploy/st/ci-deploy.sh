@@ -5,6 +5,9 @@
 #   ci-deploy.sh deploy <commit>                           deploy uploaded or built release
 #   ci-deploy.sh rollback <commit>                         rollback active release
 #   ci-deploy.sh smoke <site-origin> <cms-origin> [<sha>] public checks + optional version check
+#   ci-deploy.sh snapshot <file>                           anonymized production data for staging
+#
+# smoke sends SMOKE_BASIC_AUTH (user:password), when set, to the website (staging).
 #
 # Connection settings come from the environment: DEPLOY_SSH_HOST, DEPLOY_SSH_PORT (22),
 # DEPLOY_SSH_USER (deploy), DEPLOY_KNOWN_HOSTS (pinned host key lines) and DEPLOY_SSH_KEY
@@ -117,21 +120,55 @@ remote() {
   esac
 }
 
+snapshot() {
+  local file="$1" status attempt token
+  [[ -n "$file" && ! -e "$file" ]] || die "The snapshot file must not exist yet" 2
+  ssh_setup
+  token="slk-$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')"
+  echo "::stop-commands::$token"
+  for ((attempt = 1; attempt <= 6; attempt++)); do
+    status=0
+    "${ssh_cmd[@]}" snapshot > "$file" || status=$?
+    ((status == 75)) || break
+    echo "A deployment is running on the server; retrying in 60 seconds"
+    sleep 60
+  done
+  echo "::$token::"
+  if ((status != 0)); then
+    rm -f "$file"
+    case "$status" in
+      3) die "The server refused the snapshot request (see the log above)" 3 ;;
+      4) die "The snapshot failed on the server (see the log above)" 4 ;;
+      75) die "Deployments kept the server busy; no snapshot" 75 ;;
+      255) die "SSH connection failed (host, port, key or pinned host key)" 255 ;;
+      *) die "The snapshot failed with status $status (see the log above)" "$status" ;;
+    esac
+  fi
+  [[ "$(tar -tf "$file" | sort | tr '\n' ' ')" == "database.dump manifest.json uploads.tar " ]] ||
+    die "The snapshot is incomplete"
+  echo "Snapshot of $(($(stat -c %s "$file") / 1024 / 1024)) MB: $(tar -xOf "$file" manifest.json)"
+}
+
 smoke() {
   local site="$1" cms="$2" expected_sha="${3:-}" url response actual_sha
   [[ "$site" =~ ^https://[a-z0-9.-]+(:[0-9]+)?$ && "$cms" =~ ^https://[a-z0-9.-]+(:[0-9]+)?$ ]] ||
     die "Public origins must be https://host origins" 2
 
+  # The website of a staging environment is password protected; the CMS keeps its own login.
+  local site_auth=()
+  [[ -z "${SMOKE_BASIC_AUTH:-}" ]] || site_auth=(--user "$SMOKE_BASIC_AUTH")
   for url in "$site/" "$site/api/public/site-layout" "$cms/server/health"; do
     echo "GET $url"
+    local auth=()
+    [[ "$url" != "$site/"* ]] || auth=("${site_auth[@]}")
     curl --fail --silent --show-error --output /dev/null --retry 10 --retry-all-errors --retry-delay 6 \
-      --connect-timeout 10 --max-time 30 --proto '=https' "$url" || die "Public check failed: $url"
+      --connect-timeout 10 --max-time 30 --proto '=https' "${auth[@]}" "$url" || die "Public check failed: $url"
   done
 
   if [[ -n "$expected_sha" ]]; then
     echo "GET $site/api/version"
     response=$(curl --fail --silent --show-error --retry 5 --retry-delay 3 \
-      --connect-timeout 10 --max-time 20 --proto '=https' "$site/api/version")
+      --connect-timeout 10 --max-time 20 --proto '=https' "${site_auth[@]}" "$site/api/version")
     actual_sha=$(echo "$response" | grep -oP '"commit"\s*:\s*"\K[0-9a-f]{40}')
     if [[ "$actual_sha" != "$expected_sha" ]]; then
       die "Version mismatch: expected $expected_sha, got $actual_sha" 1
@@ -153,5 +190,6 @@ case "${1:-}" in
       die "Usage: smoke <site-origin> <cms-origin> [<expected-sha>]" 2
     fi
     ;;
-  *) die "Usage: ci-deploy.sh upload|deploy|rollback|smoke ..." 2 ;;
+  snapshot) [[ $# == 2 ]] || die "Usage: snapshot <file>" 2; snapshot "$2" ;;
+  *) die "Usage: ci-deploy.sh upload|deploy|rollback|smoke|snapshot ..." 2 ;;
 esac

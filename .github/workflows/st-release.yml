@@ -1,7 +1,8 @@
 name: Release
 # One manual run per release: resolve one commit of main, build it once on the runner, run the
-# quality gate and the full suite on exactly that commit, wait for approval in the "production"
-# environment, deploy the same artifact, verify it and record the release. docs/st/RELEASE.md
+# quality gate and the full suite on exactly that commit, serve the same artifact with anonymized
+# production data on a staging runner, wait for approval in the "production" environment, deploy
+# the same artifact, verify it and record the release. docs/st/RELEASE.md, docs/st/STAGING.md
 on:
   workflow_dispatch:
     inputs:
@@ -10,6 +11,12 @@ on:
         required: false
         default: main
         type: string
+      staging_hours:
+        description: Hours the staging environment stays up at most (it ends after production)
+        required: false
+        default: "3"
+        type: choice
+        options: ["1", "2", "3", "4", "5"]
 permissions:
   contents: read
 concurrency:
@@ -85,6 +92,83 @@ jobs:
     with:
       ref: ${{ needs.resolve.outputs.sha }}
 
+  staging:
+    needs: [resolve, build, quality, e2e]
+    # Switched on like production once the "staging" environment is configured.
+    if: vars.ST_STAGING == 'true'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 350
+    environment:
+      name: staging
+      url: ${{ steps.tunnels.outputs.site }}
+    permissions:
+      # The "staging" pointer branch.
+      contents: write
+      # serve watches the production job of this run.
+      actions: read
+      # publish shows the address on the deployment while staging runs.
+      deployments: write
+    env:
+      SHA: ${{ needs.resolve.outputs.sha }}
+      # The staging key, which the server allows nothing but "snapshot".
+      DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+      DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+      DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Staging installs the release with its own scripts, like a fresh server would.
+          ref: ${{ needs.resolve.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-${{ needs.resolve.outputs.sha }}
+          path: ${{ runner.temp }}/release
+      - name: Anonymized snapshot of the production data
+        run: deploy/st/ci-deploy.sh snapshot "$RUNNER_TEMP/snapshot.tar"
+      - name: Prepare the runner as a fresh server
+        run: deploy/st/runner-staging.sh prepare "$SHA"
+      - name: Start the tunnels
+        id: tunnels
+        run: deploy/st/runner-staging.sh tunnels
+      - name: Bootstrap staging with the release and the snapshot
+        run: deploy/st/runner-staging.sh bootstrap "$SHA" "$RUNNER_TEMP/release" "$RUNNER_TEMP/snapshot.tar"
+      # The production job waits for this step by its name.
+      - name: Staging smoke checks
+        env:
+          SMOKE_BASIC_AUTH: staging:${{ secrets.STAGING_PASSWORD }}
+        run: deploy/st/ci-deploy.sh smoke "${{ steps.tunnels.outputs.site }}" "${{ steps.tunnels.outputs.cms }}" "$SHA"
+      - name: Publish the staging addresses and move the staging pointer
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SITE: ${{ steps.tunnels.outputs.site }}
+          CMS: ${{ steps.tunnels.outputs.cms }}
+          RELEASE_TAG: ${{ needs.resolve.outputs.release_tag }}
+        run: |
+          set -euo pipefail
+          deploy/st/runner-staging.sh publish staging "$SITE"
+          git push --quiet --force "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git" "$SHA:refs/heads/staging"
+          echo "::notice title=Staging is up::$SITE (user staging, password STAGING_PASSWORD), CMS $CMS - $RELEASE_TAG with anonymized production data"
+          {
+            echo "## Staging of $RELEASE_TAG"
+            echo
+            echo "- Website: $SITE (user \`staging\`, the password is the \`STAGING_PASSWORD\` secret)"
+            echo "- CMS: $CMS (anonymized accounts; no login)"
+            echo "- Version: $SITE/api/version"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Serve until production has finished
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          HOURS: ${{ inputs.staging_hours }}
+        run: deploy/st/runner-staging.sh serve "${HOURS:-3}"
+      - name: Failure diagnostics
+        if: failure()
+        run: deploy/st/runner-staging.sh diagnostics
+
   production:
     needs: [resolve, build, quality, e2e]
     # A repository variable (not an environment variable, which job conditions cannot see)
@@ -98,6 +182,10 @@ jobs:
     concurrency:
       group: st-production
       cancel-in-progress: false
+    permissions:
+      contents: read
+      # The staging gate reads the jobs of this run.
+      actions: read
     env:
       SHA: ${{ needs.resolve.outputs.sha }}
       DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
@@ -108,6 +196,28 @@ jobs:
       DEPLOY_SITE_ORIGIN: ${{ vars.DEPLOY_SITE_ORIGIN }}
       DEPLOY_CMS_ORIGIN: ${{ vars.DEPLOY_CMS_ORIGIN }}
     steps:
+      # The staging job serves until this job has finished, so it cannot be a "needs" dependency.
+      - name: Wait for the verified staging
+        if: vars.ST_STAGING == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          jobs_url="$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100"
+          for ((i = 0; i < 120; i++)); do
+            state="$(curl --fail --silent --show-error --max-time 30 -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github+json" "$jobs_url" |
+              jq -r '[.jobs[] | select(.name == "staging")][0] | if . == null then "absent"
+                elif ([.steps[]? | select(.name == "Staging smoke checks" and .conclusion == "success")] | length) > 0 then "verified"
+                elif .status == "completed" then "failed" else "pending" end' || echo pending)"
+            case "$state" in
+              verified) echo "Staging is up and passed its smoke checks"; exit 0 ;;
+              failed | absent) echo "::error title=Staging::Staging did not pass; production is not deployed"; exit 1 ;;
+            esac
+            sleep 30
+          done
+          echo "::error title=Staging::Staging was not verified within an hour"
+          exit 1
       - name: Check the production configuration
         run: |
           set -euo pipefail
