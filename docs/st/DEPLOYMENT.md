@@ -50,6 +50,11 @@ tested there and uploaded; the server only loads and starts it.
   (Directus 634 MiB, Nuxt 197 MiB, PostgreSQL 120 MiB), so 2 GB RAM is the minimum; 4 GB gives
   headroom for traffic, backups and release checkpoints. 40 GB disk or more: each release
   keeps its images, a database/uploads checkpoint and a staged frontend output.
+- After a release upgrade (for example `do-release-upgrade` from 24.04), **reboot before the
+  bootstrap**. The bootstrap refuses to run while the running kernel is older than the installed one,
+  because the deployment account's systemd user manager does not start until then.
+- With 2 GB of RAM, add a swap file as a safety margin (the bootstrap does not change swap):
+  `fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab`
 - A sudo-capable administrator login with your own SSH key. The bootstrap opens only
   SSH, 80 and 443 in the firewall.
 
