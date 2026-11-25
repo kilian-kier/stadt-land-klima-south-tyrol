@@ -9,26 +9,11 @@
         {{ $t("generic.social_media.support_by_sharing") }}
       </p>
       <div class="flex items-center justify-center gap-6">
-        <a href="https://www.instagram.com/stadt.land.klima/" target="_blank" aria-label="Instagram">
+        <a href="https://www.instagram.com/climateaction.southtyrol/" target="_blank" aria-label="Instagram">
           <img src="~/assets/icons/icon_instagram.svg" alt="Instagram" class="h-12 w-12" />
         </a>
-        <a href="https://www.linkedin.com/company/stadt-land-klima/" target="_blank" aria-label="LinkedIn">
-          <img src="~/assets/icons/icon_linkedin.svg" alt="LinkedIn" class="h-12 w-12" />
-        </a>
-      </div>
-      <div class="mt-4 flex items-center justify-center gap-6">
-        <a href="https://whatsapp.com/channel/0029Vb8RAti2v1Ix7Yz7OM0a" target="_blank" aria-label="WhatsApp">
-          <img src="~/assets/icons/icon_whatsapp.svg" alt="WhatsApp" class="h-12 w-12" />
-        </a>
-        <a href="https://t.me/slkinfo" target="_blank" aria-label="Telegram">
-          <img src="~/assets/icons/icon_telegram.svg" alt="Telegram" class="h-12 w-12" />
-        </a>
-        <a
-          href="https://signal.group/#CjQKIPtaXcn_-6q29ufg9BBFvz0figXXqFc1H-1CddW5rkjUEhCWGjAx0p2QVVrDx4zlURBA"
-          target="_blank"
-          aria-label="Signal"
-        >
-          <img src="~/assets/icons/icon_signal.svg" alt="Signal" class="h-12 w-12" />
+        <a href="https://www.facebook.com/climateaction.southtyrol" target="_blank" aria-label="Facebook">
+          <img src="~/assets/icons/icon_facebook.svg" alt="Facebook" class="h-12 w-12" />
         </a>
       </div>
     </div>
@@ -113,10 +98,10 @@
       <div class="flex w-full flex-col items-center gap-4 pt-2 pb-4">
         <!-- Logo -->
         <NuxtLink to="/" class="flex justify-center">
-          <img src="~/assets/images/Stadt-Land-Klima-Logo.svg" class="h-16 w-auto dark:hidden" :alt="$t('logo.alt')" />
+          <img src="/st-assets/logos/slk-logo.png" class="h-16 w-auto dark:hidden" :alt="$t('logo.alt')" />
           <img
-            src="~/assets/images/Stadt-Land-Klima-Logo-dark.svg"
-            class="hidden h-16 w-auto dark:block"
+            src="/st-assets/logos/slk-logo.png"
+            class="hidden h-16 w-auto rounded bg-white px-1 dark:block"
             :alt="$t('logo.alt')"
           />
         </NuxtLink>

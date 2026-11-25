@@ -6,10 +6,10 @@
     <div class="mx-auto flex w-full max-w-(--breakpoint-xl) items-center gap-3 px-3 py-2">
       <!-- Left: Logo -->
       <NuxtLink to="/" class="shrink-0">
-        <img src="~/assets/images/Stadt-Land-Klima-Logo.svg" class="h-12 w-auto dark:hidden" :alt="$t('logo.alt')" />
+        <img src="/st-assets/logos/slk-logo.png" class="h-12 w-auto dark:hidden" :alt="$t('logo.alt')" />
         <img
-          src="~/assets/images/Stadt-Land-Klima-Logo-dark.svg"
-          class="hidden h-12 w-auto dark:block"
+          src="/st-assets/logos/slk-logo.png"
+          class="hidden h-12 w-auto rounded bg-white px-1 dark:block"
           :alt="$t('logo.alt')"
         />
       </NuxtLink>

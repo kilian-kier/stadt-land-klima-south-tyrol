@@ -16,26 +16,21 @@
         class="header-logo flex h-12 shrink-0 items-center overflow-hidden transition-[height] duration-300 ease-in-out sm:w-20 lg:w-[228px]"
         :class="scrolled ? 'sm:h-14' : 'sm:h-20'"
       >
-        <!-- SVG logotype: shown on mobile (<sm, matches TheHeaderMobile) and large desktop (≥lg) -->
+        <!-- South Tyrol logotype: shown on mobile (<sm, matches TheHeaderMobile) and large desktop (≥lg) -->
         <img
-          src="~/assets/images/Stadt-Land-Klima-Logo.svg"
+          src="/st-assets/logos/slk-logo.png"
           class="block h-full w-auto sm:hidden lg:block dark:hidden"
           :alt="$t('logo.alt')"
         />
         <img
-          src="~/assets/images/Stadt-Land-Klima-Logo-dark.svg"
-          class="hidden h-full w-auto dark:block dark:sm:hidden dark:lg:block"
+          src="/st-assets/logos/slk-logo.png"
+          class="hidden h-full w-auto rounded bg-white px-1 dark:block dark:sm:hidden dark:lg:block"
           :alt="$t('logo.alt')"
         />
-        <!-- Quad logo: only shown on sm–lg range where the header is narrow but ≥640px -->
+        <!-- Logo mark: only shown on sm–lg range where the header is narrow but ≥640px -->
         <img
-          src="~/assets/images/Stadt-Land-Kima-Logo_quad.png"
-          class="hidden h-full w-auto sm:block lg:hidden dark:hidden"
-          :alt="$t('logo.alt')"
-        />
-        <img
-          src="~/assets/images/Stadt-Land-Kima-Logo_quad-dark.png"
-          class="hidden h-full w-auto dark:sm:block dark:lg:hidden"
+          src="/SLK-favicon/favicon-256x256.png"
+          class="hidden h-full w-auto sm:block lg:hidden"
           :alt="$t('logo.alt')"
         />
       </NuxtLink>
