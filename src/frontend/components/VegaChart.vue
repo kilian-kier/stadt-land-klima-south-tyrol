@@ -107,7 +107,7 @@ import { Icon } from "@iconify/vue";
 import { computed, onMounted, onUnmounted, ref, useId, watch } from "vue";
 import slkLogoUrl from "~/assets/images/Stadt-Land-Klima-Logo.svg";
 
-const DATA_WEB_URL = "www.stadt-land-klima.de/data";
+const DATA_WEB_URL = "stadt-land-klima.climateaction.bz/data";
 const EXPORT_FONT = COLLECTION_CHART_FONT;
 let nativeZoomId = 0;
 const MIN_CHART_WIDTH = 240;

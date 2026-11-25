@@ -64,7 +64,7 @@ import { cartoBasemapProxyUrl } from "~/composables/useCartoBasemap";
 import type { MapLibreRenderSpec, RenderElement } from "~/types/slz-api";
 
 const EMPTY_FEATURE_COLLECTION = { type: "FeatureCollection", features: [] };
-const DATA_WEB_URL = "www.stadt-land-klima.de/data";
+const DATA_WEB_URL = "stadt-land-klima.climateaction.bz/data";
 const EXPORT_FONT = 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const LIGHT_MAP_BACKGROUND = "#f9fafb";
 const DARK_MAP_BACKGROUND = "#17212b";
