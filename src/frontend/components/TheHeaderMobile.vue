@@ -6,8 +6,20 @@
     <div class="mx-auto flex w-full max-w-(--breakpoint-xl) items-center gap-3 px-3 py-2">
       <!-- Left: Logo -->
       <NuxtLink to="/" class="shrink-0">
-        <img src="/st-assets/logos/slk-logo.png" class="h-12 w-auto dark:hidden" :alt="$t('logo.alt')" />
-        <img src="/st-assets/logos/slk-logo-dark.png" class="hidden h-12 w-auto dark:block" :alt="$t('logo.alt')" />
+        <img
+          src="~/assets/images/st-slk-logo.png"
+          width="1005"
+          height="485"
+          class="h-12 w-auto dark:hidden"
+          :alt="$t('logo.alt')"
+        />
+        <img
+          src="~/assets/images/st-slk-logo-dark.png"
+          width="1005"
+          height="485"
+          class="hidden h-12 w-auto dark:block"
+          :alt="$t('logo.alt')"
+        />
       </NuxtLink>
 
       <!-- Search bar fills remaining space -->
