@@ -23,16 +23,36 @@
           :alt="$t('logo.alt')"
         />
         <img
-          src="/st-assets/logos/slk-logo.png"
-          class="hidden h-full w-auto rounded bg-white px-1 dark:block dark:sm:hidden dark:lg:block"
+          src="/st-assets/logos/slk-logo-dark.png"
+          class="hidden h-full w-auto dark:block dark:sm:hidden dark:lg:block"
           :alt="$t('logo.alt')"
         />
-        <!-- Logo mark: only shown on sm–lg range where the header is narrow but ≥640px -->
-        <img
-          src="/SLK-favicon/favicon-256x256.png"
-          class="hidden h-full w-auto sm:block lg:hidden"
-          :alt="$t('logo.alt')"
-        />
+        <!-- Quad logo: only shown on sm–lg range where the header is narrow but ≥640px.
+             Italian pages show the Italian lettering of the South Tyrol logo. -->
+        <template v-if="italian">
+          <img
+            src="/st-assets/logos/slk-quad-it.png"
+            class="hidden h-full w-auto sm:block lg:hidden dark:hidden"
+            :alt="$t('logo.alt')"
+          />
+          <img
+            src="/st-assets/logos/slk-quad-it-dark.png"
+            class="hidden h-full w-auto dark:sm:block dark:lg:hidden"
+            :alt="$t('logo.alt')"
+          />
+        </template>
+        <template v-else>
+          <img
+            src="~/assets/images/Stadt-Land-Kima-Logo_quad.png"
+            class="hidden h-full w-auto sm:block lg:hidden dark:hidden"
+            :alt="$t('logo.alt')"
+          />
+          <img
+            src="~/assets/images/Stadt-Land-Kima-Logo_quad-dark.png"
+            class="hidden h-full w-auto dark:sm:block dark:lg:hidden"
+            :alt="$t('logo.alt')"
+          />
+        </template>
       </NuxtLink>
 
       <!-- Persistent Search Bar — always visible in the middle grid column. -->
@@ -170,7 +190,9 @@ import { useHeaderHeight, useHeaderSpacerHeight, useNavInputRect } from "~/compo
 import { DONATION_PAGE_PATH } from "~/shared/donation";
 import { createHeaderScrollTracker } from "~/utils/headerScroll";
 
-const { $t } = useNuxtApp();
+const { $t, $locale } = useNuxtApp();
+// A language change reloads the page, so the locale is fixed for this render.
+const italian = String($locale).startsWith("it");
 const { isOpen, isVisible, query, embeddedInput, navigationDropdownOpen, openEmbedded, close, clearQuery } =
   useSearchPalette();
 

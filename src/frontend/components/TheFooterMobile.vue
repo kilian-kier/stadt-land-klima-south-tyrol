@@ -99,11 +99,7 @@
         <!-- Logo -->
         <NuxtLink to="/" class="flex justify-center">
           <img src="/st-assets/logos/slk-logo.png" class="h-16 w-auto dark:hidden" :alt="$t('logo.alt')" />
-          <img
-            src="/st-assets/logos/slk-logo.png"
-            class="hidden h-16 w-auto rounded bg-white px-1 dark:block"
-            :alt="$t('logo.alt')"
-          />
+          <img src="/st-assets/logos/slk-logo-dark.png" class="hidden h-16 w-auto dark:block" :alt="$t('logo.alt')" />
         </NuxtLink>
 
         <!-- Footer actions -->
