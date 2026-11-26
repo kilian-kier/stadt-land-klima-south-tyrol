@@ -26,7 +26,7 @@
             class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center text-sm text-gray-500"
           >
             <SlkFlowerSpinner :size="24" class="mr-2" />
-            <span>Kommunen werden geladen...</span>
+            <span>Gemeinden werden geladen...</span>
           </div>
 
           <!-- Germany choropleth (level 1, no state selected) -->
@@ -265,7 +265,7 @@
             </div>
             <div v-if="selectedState && !municipalitiesLoading && municipalities.length" class="text-sm">
               <span class="font-bold text-gray-800 tabular-nums">{{ visibleMunicipalities.length }}</span>
-              <span class="ml-1 text-xs text-gray-400">sichtbare Kommunen</span>
+              <span class="ml-1 text-xs text-gray-400">sichtbare Gemeinden</span>
             </div>
           </div>
         </div>
@@ -295,7 +295,7 @@
             <div v-if="municipalitiesLoading" class="animate-pulse p-6 text-sm text-gray-400">
               <div class="mb-4 flex items-center gap-2">
                 <SlkFlowerSpinner :size="20" />
-                <span>Kommunen werden geladen…</span>
+                <span>Gemeinden werden geladen…</span>
               </div>
               <div class="space-y-3">
                 <div v-for="i in 10" :key="i" class="grid grid-cols-[4.5rem_minmax(0,1fr)_1rem] items-center gap-3">
@@ -307,7 +307,7 @@
             </div>
             <template v-else>
               <div class="border-b border-gray-100 px-4 py-3 xl:px-6">
-                <h2 class="text-xs font-bold tracking-wide text-gray-500 uppercase">Bewertbare Kommunen</h2>
+                <h2 class="text-xs font-bold tracking-wide text-gray-500 uppercase">Bewertbare Gemeinden</h2>
               </div>
               <div class="divide-y divide-gray-50">
                 <NuxtLink

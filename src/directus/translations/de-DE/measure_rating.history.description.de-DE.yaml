@@ -1,5 +1,5 @@
 language: de-DE
 key: measure_rating.history.description
-value: Jede Linie steht für eine Kommune. Fahre mit der Maus darüber für Details
-  – klicke eine Linie an, um zur Kommune zu springen. Klicke
-  einen farbigen Balken, um alle Kommunen dieser Bewertung anzuzeigen.
+value: Jede Linie steht für eine Gemeinde. Fahre mit der Maus darüber für Details
+  – klicke eine Linie an, um zur Gemeinde zu springen. Klicke
+  einen farbigen Balken, um alle Gemeinden dieser Bewertung anzuzeigen.

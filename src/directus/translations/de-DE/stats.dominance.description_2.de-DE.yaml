@@ -1,7 +1,7 @@
 language: de-DE
 key: stats.dominance.description_2
 value: Die <strong>Dominanzmatrix</strong> zeigt für jedes Paar (Zeile vs.
-  Spalte), wie oft die Zeilen-Kommune die Spalten-Kommune übertroffen hat.
-  Diagonal angeordnete blaue Blöcke deuten auf Cluster ähnlich starker Kommunen
+  Spalte), wie oft die Zeilen-Gemeinde die Spalten-Gemeinde übertroffen hat.
+  Diagonal angeordnete blaue Blöcke deuten auf Cluster ähnlich starker Gemeinden
   hin - sogenannte Leistungs-Tiers. Die Matrix ist nach Gewinnrate sortiert
-  (oben = stärkste Kommunen).
+  (oben = stärkste Gemeinden).

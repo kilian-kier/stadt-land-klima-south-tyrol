@@ -221,7 +221,7 @@ try {
   await page.getByRole("button", { name: town.state!, exact: true }).click();
   await waitFor("state-filtered map marker", async () => (await page.locator(".project-map-icon").count()) === 1);
   await page.locator(".project-map-icon").click();
-  await popup.getByText("Kommunenmitte (ungefähr)", { exact: true }).waitFor();
+  await popup.getByText("Gemeindemitte (ungefähr)", { exact: true }).waitFor();
   await page.getByRole("button", { name: town.state!, exact: true }).click();
   await page.getByRole("button", { name: "Alle Bundesländer", exact: true }).click();
   await page.getByRole("radio", { name: "Liste", exact: true }).click();

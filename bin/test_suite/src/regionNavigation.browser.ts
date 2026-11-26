@@ -59,7 +59,7 @@ try {
       assert(placeholder && placeholder.height >= 320);
       await expect(main.locator("section").last().locator(".skeleton").first()).toBeVisible();
       await expect(main.locator("ol li")).toHaveCount(0);
-      await expect(main.getByText("Keine Kommunen gefunden", { exact: true })).toHaveCount(0);
+      await expect(main.getByText("Keine Gemeinden gefunden", { exact: true })).toHaveCount(0);
       const navigationMs = Date.now() - started;
       release.get("area")!();
       await expect(main.locator("h1")).toHaveText("Deutschland", { timeout: 20000 });

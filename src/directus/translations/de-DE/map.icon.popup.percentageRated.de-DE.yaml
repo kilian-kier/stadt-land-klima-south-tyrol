@@ -1,3 +1,3 @@
 language: de-DE
 key: map.icon.popup.percentageRated
-value: Diese Kommune wurde zu :percentage_rated% bewertet.
+value: Diese Gemeinde wurde zu :percentage_rated% bewertet.

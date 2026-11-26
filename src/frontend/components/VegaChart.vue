@@ -447,7 +447,7 @@ const csvCommentBlock = computed(() => {
   const rows = [
     ["Titel", exportTitle.value],
     ["Untertitel", exportSubtitle.value],
-    ["Kommune", props.exportAreaName],
+    ["Gemeinde", props.exportAreaName],
     ["ARS", props.exportArs],
     ["Datensatz", props.exportCollectionName],
     ["Stand", normalizedExportDate.value],
@@ -470,7 +470,7 @@ const exportAreaLabel = computed(() => {
 
 const pngFooterLines = computed(() => {
   const meta = [];
-  if (exportAreaLabel.value) meta.push(`Kommune: ${exportAreaLabel.value}`);
+  if (exportAreaLabel.value) meta.push(`Gemeinde: ${exportAreaLabel.value}`);
   if (props.exportAttribution) meta.push(`Datenquelle: ${props.exportAttribution}`);
   if (normalizedExportDate.value) meta.push(`Stand: ${normalizedExportDate.value}`);
   return [meta.join("  ·  "), `Quelle: Stadt.Land.Klima! e.V.  ·  ${DATA_WEB_URL}`].filter(Boolean);
