@@ -83,6 +83,8 @@ function area(entry: Entry, options: { geometry?: boolean } = {}) {
     names: { "de-DE": entry.name_de, "it-IT": entry.name_it, lld: entry.name_ld ?? null },
     geo_center: entry.geo_center,
     ...(options.geometry === false ? {} : { geo_area: entry.geo_area }),
+    // Municipality pages read the population from here, like from Stadt.Land.Zahl.
+    data_products: { population_data: entry.population == null ? null : { population: entry.population } },
     contained_by: containedBy(entry),
     stadtlandklima_data_all: [],
   };
@@ -186,7 +188,8 @@ export function stAreasResponse(method: string, rawUrl: string): { status: numbe
       return { status: 200, body: { areas } };
     }
     if (action === "bordering-municipalities") {
-      const bordering = (entry.bordering ?? []).map((ars) => area(byArs.get(ars)!, { geometry: false }));
+      // The neighbour cards draw each neighbour's outline.
+      const bordering = (entry.bordering ?? []).map((ars) => area(byArs.get(ars)!));
       return { status: 200, body: { bordering_municipalities: bordering } };
     }
     if (query.get("geometry_only") === "true")

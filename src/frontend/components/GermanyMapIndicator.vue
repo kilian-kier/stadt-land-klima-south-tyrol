@@ -42,13 +42,14 @@ import type { PropType } from "vue";
 
 import { computed } from "vue";
 
-const LON_MIN = 5.87,
-  LON_MAX = 15.04;
-const LAT_MAX = 55.06,
-  LAT_MIN = 47.27;
-// Aspect-corrected viewBox: Germany is ~9.17° lon × 7.79° lat.
-// Applying cos(51.2°) ≈ 0.628 lon-scale: effective width = 9.17 × 0.628 ÷ 7.79 × 100 ≈ 74
-const SVG_W = 74;
+// South Tyrol: the outline files hold the province and its districts (deploy/st/areas).
+const LON_MIN = 10.35,
+  LON_MAX = 12.5;
+const LAT_MAX = 47.11,
+  LAT_MIN = 46.2;
+// Aspect-corrected viewBox: South Tyrol is ~2.15° lon × 0.91° lat.
+// Applying cos(46.65°) ≈ 0.686 lon-scale: effective width = 2.15 × 0.686 ÷ 0.91 × 100 ≈ 162
+const SVG_W = 162;
 const SVG_H = 100;
 
 function project(lon: number, lat: number): [number, number] {
