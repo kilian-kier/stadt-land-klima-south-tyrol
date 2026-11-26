@@ -47,10 +47,16 @@
     </div>
 
     <!-- Info grid (always visible, outside collapse) -->
-    <!-- Berlin and Hamburg are the only states which have one municipality (Bremen has Bremen and Bremerhaven) -->
+    <!-- Berlin and Hamburg are the only states which have one municipality (Bremen has Bremen and Bremerhaven);
+         South Tyrol is the only region of this platform. -->
     <div class="space-y-3 px-6 pb-6">
       <div
-        v-if="municipality?.state && municipality.state !== 'Berlin' && municipality.state !== 'Hamburg'"
+        v-if="
+          municipality?.state &&
+          municipality.state !== 'Berlin' &&
+          municipality.state !== 'Hamburg' &&
+          municipality.state !== 'Südtirol'
+        "
         class="flex items-center justify-between"
       >
         <div class="flex items-center gap-2">

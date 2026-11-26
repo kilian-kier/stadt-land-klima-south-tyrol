@@ -50,6 +50,7 @@ test("an area resolves by key and by slug with its outline, centre, state and pa
   const bozen = body<Area>("/api/areas/210040000008/");
   assert.equal(bozen.name, "Bozen / Bolzano");
   assert.equal(bozen.state, "Südtirol");
+  assert.equal((bozen.data_products as { population_data: { population: number } }).population_data.population, 106564);
   assert.equal(bozen.is_reasonable_for_municipal_rating, true);
   assert.ok((bozen.geo_area as { type: string }).type.endsWith("Polygon"));
   assert.deepEqual(
@@ -84,6 +85,10 @@ test("children, ancestors, nearby and bordering municipalities follow the hierar
     "/api/areas/210040000008/bordering-municipalities/",
   );
   assert.ok(bordering_municipalities.some((m) => m.name.startsWith("Leifers")));
+  assert.ok(
+    bordering_municipalities.every((m) => (m.geo_area as { type?: string } | undefined)?.type),
+    "neighbour outlines",
+  );
 });
 
 test("data collections are not available and nothing but GET is answered", () => {

@@ -254,7 +254,7 @@
           <div class="space-y-6 lg:sticky lg:top-24">
             <DetailMunicipalityQuickInfoDesktop
               :municipality="unratedMunicipality"
-              :municipality-type-label="slzArea.prefix"
+              :municipality-type-label="slzArea.prefix === 'Gemeinde' ? '' : slzArea.prefix"
             />
             <div class="rounded-xs border border-(--slk-border) bg-(--slk-blue-tint) p-4 shadow-list">
               <CanonicalButton
