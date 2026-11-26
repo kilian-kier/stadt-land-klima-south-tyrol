@@ -1,6 +1,13 @@
 {
   "pages": [
     {
+      "slug": "index",
+      "name": "Index",
+      "file": "pages/index.html",
+      "sort_order": 1,
+      "page_category": "information_and_participate"
+    },
+    {
       "slug": "ueber-uns",
       "name": "Über uns",
       "file": "pages/ueber-uns.html",
