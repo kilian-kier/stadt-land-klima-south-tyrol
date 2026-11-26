@@ -15,7 +15,8 @@
         "../../src/frontend/node_modules/@blokkli/editor/dist/runtime/editor/types/state.d.ts"
       ]
     },
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true
   },
   "include": ["src/**/*.ts", "../lib/*.ts", "../../podman/directus/security-patches/*.ts"]
 }

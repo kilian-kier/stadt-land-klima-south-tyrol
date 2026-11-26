@@ -39,7 +39,7 @@ const zoom = ref(10);
 const mapReady = ref(false);
 
 // Default center (Germany)
-const defaultCenter: [number, number] = [51.1657, 10.4515];
+const defaultCenter: [number, number] = [46.65, 11.4];
 
 const geoCenterLatLng = computed<[number, number] | null>(() => {
   const coordinates = props.geoCenter?.coordinates;

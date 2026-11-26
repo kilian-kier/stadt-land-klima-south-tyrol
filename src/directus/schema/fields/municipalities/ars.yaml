@@ -26,7 +26,7 @@ meta:
   validation:
     _and:
       - ars:
-          _regex: ^(0[1-9]|1[0-6])[0-9]{10}$
+          _regex: ^(0[1-9]|1[0-6]|21)[0-9]{10}$
   validation_message: $t:municipality.ars.validation_fail
   width: full
 schema:

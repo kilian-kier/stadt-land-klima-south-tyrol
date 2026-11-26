@@ -43,7 +43,7 @@
                 }
               "
               :zoom="10"
-              :center="[area.geoCenter?.coordinates[1] || 51.1657, area.geoCenter?.coordinates[0] || 10.4515]"
+              :center="[area.geoCenter?.coordinates[1] || 46.65, area.geoCenter?.coordinates[0] || 11.4]"
               class="z-0 h-full w-full"
               :options="{ zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false }"
               @ready="() => onNearbyMapReady(area.ars, area.geoArea)"
