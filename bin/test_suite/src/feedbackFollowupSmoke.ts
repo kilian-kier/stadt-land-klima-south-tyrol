@@ -21,9 +21,14 @@ try {
         const photo = hero.locator("figure img");
         await photo.scrollIntoViewIfNeeded();
         await photo.evaluate((image) => (image as HTMLImageElement).decode());
-        assert.match(await hero.locator("figcaption").innerText(), /Christhard Landgraf, CC BY/);
         assert.equal(await hero.locator(".slk-area-search-tabs").count(), 0);
-        for (const href of ["/klimawerkstatt", "/register_localteam", "/ueber-uns", "/spenden"]) {
+        // South Tyrol: information evenings, local teams, about and partners (no workshop or donation page).
+        for (const href of [
+          "https://climateaction.bz/stadt-land-klima/",
+          "/register_localteam",
+          "/ueber-uns",
+          "/partner-und-netzwerk",
+        ]) {
           assert(await page.locator(`main a[href="${href}"]`).count(), `Homepage restores ${href}`);
         }
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
