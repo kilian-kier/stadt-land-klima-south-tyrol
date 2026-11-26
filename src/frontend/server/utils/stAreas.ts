@@ -10,7 +10,7 @@
  * with ISTAT number 021NNN), because the platform derives regions from key prefixes.
  * Data collections (statistics, overview tiles) are not available and answer 404.
  */
-import data from "../data/st-areas.json" with { type: "json" };
+import data from "../data/st-areas.json";
 
 type Geometry = { type: string; coordinates: unknown };
 type Entry = {
