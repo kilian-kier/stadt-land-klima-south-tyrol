@@ -76,10 +76,12 @@ test("children, ancestors, nearby and bordering municipalities follow the hierar
     ["210000000000", "210040000000"],
   );
 
+  // Around a municipality, nearby means its neighbouring municipalities, whatever the radius.
   const { areas } = body<{ areas: (Area & { distance_km: number })[] }>(
-    "/api/areas/210040000008/nearby/?radius_km=15&levels=4,5,6&is_reasonable_for_municipal_rating=true",
+    "/api/areas/210040000008/nearby/?radius_km=45&levels=4,5,6&limit=24&is_reasonable_for_municipal_rating=true",
   );
-  assert.ok(areas.length > 3 && areas.every((a) => a.level === 6 && a.distance_km <= 15 && a.ars !== "210040000008"));
+  const neighbours = body<{ bordering_municipalities: Area[] }>("/api/areas/210040000008/bordering-municipalities/");
+  assert.deepEqual(areas.map((a) => a.ars).sort(), neighbours.bordering_municipalities.map((a) => a.ars).sort());
 
   const { bordering_municipalities } = body<{ bordering_municipalities: Area[] }>(
     "/api/areas/210040000008/bordering-municipalities/",
