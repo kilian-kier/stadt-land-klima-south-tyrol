@@ -178,11 +178,19 @@ export function stAreasResponse(method: string, rawUrl: string): { status: numbe
       const limit = bounded(query.get("limit"), 50, 500);
       const geometry = query.get("include_geometry") === "true";
       const rateable = query.get("is_reasonable_for_municipal_rating") === "true";
+      // The radius comes from upstream's German data pages (45 km); South Tyrol is too small for it.
+      // Around a municipality, "nearby" means its neighbouring municipalities; around a district or
+      // South Tyrol, what lies in it (and the other districts).
+      const prefix = entry.level === 4 ? entry.ars.slice(0, 5) : entry.level === 2 ? entry.ars.slice(0, 2) : "";
+      const neighbours = isMunicipality(entry) ? new Set(entry.bordering ?? []) : null;
       const areas = all
         .filter((other) => other !== entry && levels.includes(other.level) && (!rateable || isMunicipality(other)))
-        .map((other) => ({ other, distance: distanceKm(entry, other) }))
-        .filter(({ distance }) => distance <= radius)
-        .sort((a, b) => a.distance - b.distance)
+        .filter((other) => !prefix || other.level === 4 || other.ars.startsWith(prefix))
+        .filter((other) => !neighbours || neighbours.has(other.ars))
+        .map((other) => ({ other, distance: distanceKm(entry, other), inside: !!prefix && other.level !== 4 }))
+        .filter(({ distance, inside }) => inside || !!neighbours || distance <= radius)
+        // Members first, so that a limit never drops a municipality of the district.
+        .sort((a, b) => Number(b.inside) - Number(a.inside) || a.distance - b.distance)
         .slice(0, limit)
         .map(({ other, distance }) => ({ ...area(other, { geometry }), distance_km: Math.round(distance * 10) / 10 }));
       return { status: 200, body: { areas } };

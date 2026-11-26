@@ -25,16 +25,18 @@
             <li class="h-3 w-28 skeleton" />
           </template>
           <template v-else-if="!areaReady">
-            <li>
-              <BreadcrumbItem label="Deutschland" href="/data" :sibling-level="null" />
-            </li>
-            <li class="text-gray-300 select-none">›</li>
+            <template v-if="!isSouthTyrol">
+              <li>
+                <BreadcrumbItem label="Deutschland" href="/data" :sibling-level="null" />
+              </li>
+              <li class="text-gray-300 select-none">›</li>
+            </template>
             <li class="h-3 w-32 skeleton" />
             <li class="text-gray-300 select-none">›</li>
             <li class="font-semibold text-gray-800">{{ `${displayArea?.prefix} ${displayArea?.name}`.trim() }}</li>
           </template>
           <template v-else>
-            <template v-if="(displayArea?.level ?? 0) > 1">
+            <template v-if="(displayArea?.level ?? 0) > 1 && !isSouthTyrol">
               <li>
                 <BreadcrumbItem label="Deutschland" href="/data" :sibling-level="null" />
               </li>
@@ -165,7 +167,7 @@
                   {{ levelLabel(displayArea.level) }}
                 </dd>
               </div>
-              <div v-if="displayArea?.ars">
+              <div v-if="displayArea?.ars && !isSouthTyrol">
                 <dt
                   class="mb-0.5 text-xs"
                   :class="areaReady && heroBackgroundImage ? 'text-white/70' : 'text-gray-500'"
@@ -490,6 +492,8 @@ const area = computed(() => {
   return parsed.success ? parsed.data : null;
 });
 const displayArea = computed(() => area.value);
+// South Tyrol areas (server/utils/stAreas.ts) have no German parent, level names or ARS to show.
+const isSouthTyrol = computed(() => String(displayArea.value?.ars ?? "").startsWith("21"));
 const hasDisplayArea = computed(() => !!displayArea.value?.name);
 const exportAreaName = computed(
   () => [displayArea.value?.prefix, displayArea.value?.name].filter(Boolean).join(" ") || String(slug.value),
@@ -865,6 +869,8 @@ onMounted(() => {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function levelLabel(level: number | null | undefined) {
+  if (isSouthTyrol.value)
+    return ({ 2: "Land", 4: "Bezirksgemeinschaft", 6: "Gemeinde" } as Record<number, string>)[level ?? 0] ?? "";
   const map: Record<number, string> = {
     1: "Bundesrepublik",
     2: "Bundesland",
