@@ -18,12 +18,16 @@
       >
         <!-- South Tyrol logotype: shown on mobile (<sm, matches TheHeaderMobile) and large desktop (≥lg) -->
         <img
-          src="/st-assets/logos/slk-logo.png"
+          src="~/assets/images/st-slk-logo.png"
+          width="1005"
+          height="485"
           class="block h-full w-auto sm:hidden lg:block dark:hidden"
           :alt="$t('logo.alt')"
         />
         <img
-          src="/st-assets/logos/slk-logo-dark.png"
+          src="~/assets/images/st-slk-logo-dark.png"
+          width="1005"
+          height="485"
           class="hidden h-full w-auto dark:block dark:sm:hidden dark:lg:block"
           :alt="$t('logo.alt')"
         />
@@ -31,12 +35,16 @@
              Italian pages show the Italian lettering of the South Tyrol logo. -->
         <template v-if="italian">
           <img
-            src="/st-assets/logos/slk-quad-it.png"
+            src="~/assets/images/st-slk-quad-it.png"
+            width="450"
+            height="445"
             class="hidden h-full w-auto sm:block lg:hidden dark:hidden"
             :alt="$t('logo.alt')"
           />
           <img
-            src="/st-assets/logos/slk-quad-it-dark.png"
+            src="~/assets/images/st-slk-quad-it-dark.png"
+            width="450"
+            height="445"
             class="hidden h-full w-auto dark:sm:block dark:lg:hidden"
             :alt="$t('logo.alt')"
           />

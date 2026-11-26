@@ -104,8 +104,20 @@
         <!-- Logo -->
         <div class="shrink-0">
           <NuxtLink to="/">
-            <img src="/st-assets/logos/slk-logo.png" class="h-24 w-auto dark:hidden" :alt="$t('logo.alt')" />
-            <img src="/st-assets/logos/slk-logo-dark.png" class="hidden h-24 w-auto dark:block" :alt="$t('logo.alt')" />
+            <img
+              src="~/assets/images/st-slk-logo.png"
+              width="1005"
+              height="485"
+              class="h-24 w-auto dark:hidden"
+              :alt="$t('logo.alt')"
+            />
+            <img
+              src="~/assets/images/st-slk-logo-dark.png"
+              width="1005"
+              height="485"
+              class="hidden h-24 w-auto dark:block"
+              :alt="$t('logo.alt')"
+            />
           </NuxtLink>
         </div>
 

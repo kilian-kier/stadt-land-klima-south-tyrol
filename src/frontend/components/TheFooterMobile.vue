@@ -98,8 +98,20 @@
       <div class="flex w-full flex-col items-center gap-4 pt-2 pb-4">
         <!-- Logo -->
         <NuxtLink to="/" class="flex justify-center">
-          <img src="/st-assets/logos/slk-logo.png" class="h-16 w-auto dark:hidden" :alt="$t('logo.alt')" />
-          <img src="/st-assets/logos/slk-logo-dark.png" class="hidden h-16 w-auto dark:block" :alt="$t('logo.alt')" />
+          <img
+            src="~/assets/images/st-slk-logo.png"
+            width="1005"
+            height="485"
+            class="h-16 w-auto dark:hidden"
+            :alt="$t('logo.alt')"
+          />
+          <img
+            src="~/assets/images/st-slk-logo-dark.png"
+            width="1005"
+            height="485"
+            class="hidden h-16 w-auto dark:block"
+            :alt="$t('logo.alt')"
+          />
         </NuxtLink>
 
         <!-- Footer actions -->
