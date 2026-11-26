@@ -18,7 +18,8 @@ try {
         await waitForHydration(page);
         const hero = page.locator("section").filter({ has: page.locator("h1") });
         assert.equal(await hero.locator(".uppercase").count(), 0);
-        const photo = hero.locator("figure img");
+        // The hero shows one of two logos (light and dark mode); check the visible one.
+        const photo = hero.locator("figure img:visible");
         await photo.scrollIntoViewIfNeeded();
         await photo.evaluate((image) => (image as HTMLImageElement).decode());
         assert.equal(await hero.locator(".slk-area-search-tabs").count(), 0);
