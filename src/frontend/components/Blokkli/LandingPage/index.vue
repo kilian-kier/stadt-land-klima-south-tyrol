@@ -43,21 +43,23 @@
           />
         </div>
       </div>
-      <figure class="min-w-0">
+      <!-- South Tyrol: the logo until a photo from South Tyrol is available. -->
+      <figure class="flex min-w-0 items-center justify-center">
         <img
-          src="~/assets/images/home/berlin-friedensplatz.webp"
-          :alt="$t('home.photo.alt')"
-          width="1100"
-          height="900"
+          src="~/assets/images/st-slk-logo.png"
+          width="1005"
+          height="485"
+          :alt="$t('logo.alt')"
           fetchpriority="high"
-          class="aspect-[11/9] w-full object-cover"
+          class="w-full max-w-xl dark:hidden"
         />
-        <figcaption class="mt-2 text-xs leading-relaxed text-(--slk-text-muted)">
-          {{ $t("home.photo.credit") }} ·
-          <NuxtLink to="/projects/berliner-klimaanpassungsgesetz-2025" class="underline underline-offset-2">
-            {{ $t("home.photo.link") }}
-          </NuxtLink>
-        </figcaption>
+        <img
+          src="~/assets/images/st-slk-logo-dark.png"
+          width="1005"
+          height="485"
+          :alt="$t('logo.alt')"
+          class="hidden w-full max-w-xl dark:block"
+        />
       </figure>
     </section>
 
@@ -104,7 +106,7 @@
       </div>
     </section>
 
-    <section aria-labelledby="home-projects">
+    <section v-if="data?.projects.length" aria-labelledby="home-projects">
       <div class="mb-5 flex flex-wrap items-baseline justify-between gap-3">
         <h2 id="home-projects" class="font-heading text-3xl font-bold text-gray">{{ $t("home.projects.title") }}</h2>
         <CanonicalButton
@@ -115,7 +117,7 @@
         />
       </div>
       <p class="mb-5 max-w-3xl leading-relaxed text-gray">{{ $t("home.projects.description") }}</p>
-      <div v-if="data?.projects.length" class="grid gap-5 md:grid-cols-3">
+      <div class="grid gap-5 md:grid-cols-3">
         <NuxtLink
           v-for="project in data.projects"
           :key="project.id"
@@ -171,8 +173,8 @@
       </div>
     </section>
 
-    <section aria-labelledby="home-about" class="grid gap-8 lg:grid-cols-2">
-      <div>
+    <section aria-labelledby="home-about">
+      <div class="max-w-3xl">
         <h2 id="home-about" class="mb-3 font-heading text-3xl font-bold text-gray">{{ $t("home.about.title") }}</h2>
         <p class="mb-5 leading-relaxed text-gray">{{ $t("home.about.description") }}</p>
         <div class="flex flex-wrap gap-x-6 gap-y-3">
@@ -183,22 +185,12 @@
             color="bright-green"
           />
           <CanonicalButton
-            href="/kooperationen-oder-partner-oder-netzwerk"
+            href="/partner-und-netzwerk"
             :label="$t('home.about.network')"
             icon-slug="icon_team"
             color="bright-green"
           />
         </div>
-      </div>
-      <div class="border-l-4 border-light-green pl-6">
-        <h3 class="mb-3 font-heading text-2xl font-bold text-gray">{{ $t("home.support.title") }}</h3>
-        <p class="mb-5 leading-relaxed text-gray">{{ $t("home.support.description") }}</p>
-        <CanonicalButton
-          href="/spenden"
-          :label="$t('home.support.link')"
-          color="bright-green"
-          icon-slug="icon_hand_holding_heart"
-        />
       </div>
     </section>
 
@@ -249,9 +241,10 @@ const gettingStarted = computed(() => [
     title: $t("home.workshop.title"),
     description: $t("home.workshop.description"),
     label: $t("home.workshop.link"),
-    href: "/klimawerkstatt",
+    // South Tyrol: the information evenings of Climate Action South Tyrol.
+    href: "https://climateaction.bz/stadt-land-klima/",
     icon: "icon_team",
-    external: false,
+    external: true,
   },
   {
     title: $t("home.assess.title"),
@@ -265,9 +258,9 @@ const gettingStarted = computed(() => [
     title: $t("home.onboarding.title"),
     description: $t("home.onboarding.description"),
     label: $t("home.onboarding.link"),
-    href: "https://cal.stadt-land-klima.de/otto/onboarding",
+    href: "/contact",
     icon: "icon_newsletter_click",
-    external: true,
+    external: false,
   },
 ]);
 const steps = computed(() => [
@@ -292,8 +285,9 @@ const steps = computed(() => [
     iconSlug: "icon_team",
     title: $t("home.how.act.title"),
     description: $t("home.how.act.description"),
-    href: "/projects",
-    link: $t("home.projects.all"),
+    // Without published success projects yet, this step invites people to take part instead.
+    href: data.value?.projects.length ? "/projects" : "/mitmachen",
+    link: data.value?.projects.length ? $t("home.projects.all") : $t("home.participate"),
   },
 ]);
 </script>
