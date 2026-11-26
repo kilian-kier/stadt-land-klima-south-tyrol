@@ -124,16 +124,17 @@ const indicatorStyle = computed(() => ({
   "--germany-map-marker-dark": props.darkMarkerColor,
 }));
 
+// The marker uses the same projection as the outlines.
 const markerX = computed(() => {
-  if (props.lon == null) return null;
-  const x = ((props.lon - 5.87) / (15.04 - 5.87)) * 74;
-  return x >= 0 && x <= 74 ? x : null;
+  if (props.lon == null || props.lat == null) return null;
+  const [x] = project(props.lon, props.lat);
+  return x >= 0 && x <= SVG_W ? x : null;
 });
 
 const markerY = computed(() => {
-  if (props.lat == null) return null;
-  const y = ((55.06 - props.lat) / (55.06 - 47.27)) * 100;
-  return y >= 0 && y <= 100 ? y : null;
+  if (props.lon == null || props.lat == null) return null;
+  const [, y] = project(props.lon, props.lat);
+  return y >= 0 && y <= SVG_H ? y : null;
 });
 </script>
 
