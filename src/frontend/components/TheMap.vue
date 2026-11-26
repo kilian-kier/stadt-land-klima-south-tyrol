@@ -11,8 +11,8 @@
       <LMap
         v-if="clientReady"
         ref="mapRef"
-        :zoom="6"
-        :center="[51.1657, 10.4515]"
+        :zoom="9"
+        :center="[46.65, 11.4]"
         style="height: 100%; width: 100%"
         class="h-full w-full"
         @ready="onMapReady"

@@ -1078,6 +1078,7 @@ export const translationKeys = [
   "states.sachsen",
   "states.sachsen_anhalt",
   "states.schleswig_holstein",
+  "states.suedtirol",
   "states.thueringen",
   "stats.action",
   "stats.action.current_rating",

@@ -45,6 +45,8 @@ meta:
         value: Hamburg
       - text: $t:states.bremen
         value: Bremen
+      - text: $t:states.suedtirol
+        value: Südtirol
   readonly: false
   required: true
   searchable: true

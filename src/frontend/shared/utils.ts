@@ -115,6 +115,8 @@ export const ARS_STATE_MAP: Readonly<Record<string, string>> = {
   "14": "Sachsen",
   "15": "Sachsen-Anhalt",
   "16": "Thüringen",
+  // South Tyrol areas (server/utils/stAreas.ts) use 21 as their state prefix.
+  "21": "Südtirol",
 };
 
 export function getStateFromArs(ars: string | number | null | undefined) {

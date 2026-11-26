@@ -68,7 +68,7 @@ const mappedStops = computed(() =>
   }),
 );
 const routePoints = computed<LatLng[]>(() => mappedStops.value.map((stop) => stop.point));
-const initialCenter = computed<LatLng>(() => routePoints.value[0] ?? [51.1657, 10.4515]);
+const initialCenter = computed<LatLng>(() => routePoints.value[0] ?? [46.65, 11.4]);
 const mapOptions = { zoomControl: true, scrollWheelZoom: false, doubleClickZoom: false };
 
 // The curve indicates sequence only. It does not represent roads or travel distance.

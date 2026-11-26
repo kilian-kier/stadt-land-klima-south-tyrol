@@ -96,7 +96,7 @@ const visibleNeighbors = computed(() =>
   }),
 );
 
-const mapCenter = computed<[number, number]>(() => centerFor(props.area) ?? [51.1657, 10.4515]);
+const mapCenter = computed<[number, number]>(() => centerFor(props.area) ?? [46.65, 11.4]);
 
 function parseGeo(input: unknown) {
   return parseGeoData(input);

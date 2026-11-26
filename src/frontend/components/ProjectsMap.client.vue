@@ -1,8 +1,8 @@
 <template>
   <LMap
     ref="mapRef"
-    :zoom="6"
-    :center="[51.1657, 10.4515]"
+    :zoom="9"
+    :center="[46.65, 11.4]"
     :use-global-leaflet="false"
     :options="{ scrollWheelZoom: false }"
     class="project-map h-full w-full"
