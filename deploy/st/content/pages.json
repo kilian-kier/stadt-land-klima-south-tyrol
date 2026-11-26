@@ -1,0 +1,44 @@
+{
+  "pages": [
+    { "slug": "ueber-uns", "name": "Über uns", "file": "pages/ueber-uns.html", "sort_order": 10, "page_category": "information_and_participate" },
+    { "slug": "mitmachen", "name": "Mitmachen", "file": "pages/mitmachen.html", "sort_order": 20, "page_category": "information_and_participate" },
+    { "slug": "faqs", "name": "FAQs", "file": "pages/faqs.html", "sort_order": 30, "page_category": "information_and_participate" },
+    { "slug": "partner-und-netzwerk", "name": "Partner & Netzwerk", "file": "pages/partner-und-netzwerk.html", "sort_order": 40, "page_category": "outreach_and_network" },
+    { "slug": "code-of-conduct", "name": "Code of Conduct", "file": "pages/code-of-conduct.html", "sort_order": 50, "page_category": "structures_and_legal" },
+    { "slug": "impressum", "name": "Impressum", "file": "pages/impressum.html", "sort_order": 140, "page_category": "structures_and_legal" },
+    { "slug": "datenschutz", "name": "Datenschutz", "file": "pages/datenschutz.html", "sort_order": 130, "page_category": "structures_and_legal" }
+  ],
+  "navigation": {
+    "header_items": [
+      { "id": "st-nav-ueber-uns", "label": "Über uns", "link_type": "page", "page_slug": "ueber-uns", "children": [
+        { "id": "st-nav-partner", "label": "Partner & Netzwerk", "link_type": "page", "page_slug": "partner-und-netzwerk", "children": [] },
+        { "id": "st-nav-coc", "label": "Code of Conduct", "link_type": "page", "page_slug": "code-of-conduct", "children": [] }
+      ] },
+      { "id": "st-nav-mitmachen", "label": "Mitmachen", "link_type": "page", "page_slug": "mitmachen", "children": [
+        { "id": "st-nav-lokalteam", "label": "Lokalteam gründen", "link_type": "page", "page_slug": "register_localteam", "children": [] },
+        { "id": "st-nav-faqs", "label": "FAQs", "link_type": "page", "page_slug": "faqs", "children": [] }
+      ] },
+      { "id": "st-nav-kontakt", "label": "Kontakt", "link_type": "page", "page_slug": "contact", "children": [] }
+    ],
+    "footer_columns": [
+      { "id": "st-col-projekt", "title": "Projekt", "links": [
+        { "id": "st-col-ueber-uns", "label": "Über uns", "link_type": "page", "page_slug": "ueber-uns" },
+        { "id": "st-col-partner", "label": "Partner & Netzwerk", "link_type": "page", "page_slug": "partner-und-netzwerk" },
+        { "id": "st-col-coc", "label": "Code of Conduct", "link_type": "page", "page_slug": "code-of-conduct" }
+      ] },
+      { "id": "st-col-mitmachen", "title": "Mitmachen", "links": [
+        { "id": "st-col-mitmachen-link", "label": "Mitmachen", "link_type": "page", "page_slug": "mitmachen" },
+        { "id": "st-col-lokalteam", "label": "Lokalteam gründen", "link_type": "page", "page_slug": "register_localteam" },
+        { "id": "st-col-faqs", "label": "FAQs", "link_type": "page", "page_slug": "faqs" }
+      ] },
+      { "id": "st-col-kontakt", "title": "Kontakt", "links": [
+        { "id": "st-col-kontakt-link", "label": "Kontakt", "link_type": "page", "page_slug": "contact" },
+        { "id": "st-col-feedback", "label": "Feedback", "link_type": "page", "page_slug": "feedback" }
+      ] },
+      { "id": "st-col-rechtliches", "title": "Rechtliches", "links": [
+        { "id": "st-col-impressum", "label": "Impressum", "link_type": "page", "page_slug": "impressum" },
+        { "id": "st-col-datenschutz", "label": "Datenschutz", "link_type": "page", "page_slug": "datenschutz" }
+      ] }
+    ]
+  }
+}
