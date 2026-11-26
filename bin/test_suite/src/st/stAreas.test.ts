@@ -91,6 +91,17 @@ test("children, ancestors, nearby and bordering municipalities follow the hierar
   );
 });
 
+test("around a district, nearby lists its own municipalities and other districts only", () => {
+  const eisacktal = "210060000000";
+  const { areas } = body<{ areas: Area[] }>(
+    `/api/areas/${eisacktal}/nearby/?radius_km=45&levels=4,5,6&limit=24&include_geometry=true`,
+  );
+  const municipalities = areas.filter((a) => a.level === 6);
+  assert.equal(municipalities.length, 13);
+  assert.ok(municipalities.every((m) => m.ars.startsWith("21006")));
+  assert.ok(!areas.some((a) => a.name.includes("Thurn")), "St. Martin in Thurn belongs to the Pustertal");
+});
+
 test("data collections are not available and nothing but GET is answered", () => {
   assert.equal(get("/api/collections/stadtlandklima/overview/").status, 404);
   assert.deepEqual(body<{ collections: unknown[] }>("/api/manifests/collections-index").collections, []);
