@@ -13,7 +13,7 @@
            looks identical to TheHeaderMobile (h-12 / py-2), preventing layout shift. -->
       <NuxtLink
         to="/"
-        class="header-logo flex h-12 shrink-0 items-center overflow-hidden transition-[height] duration-300 ease-in-out sm:w-20 lg:w-auto"
+        class="header-logo flex h-12 shrink-0 items-center overflow-hidden transition-[height] duration-300 ease-in-out sm:w-20 lg:w-[166px]"
         :class="scrolled ? 'sm:h-14' : 'sm:h-20'"
       >
         <!-- South Tyrol logotype: shown on mobile (<sm, matches TheHeaderMobile) and large desktop (≥lg) -->
