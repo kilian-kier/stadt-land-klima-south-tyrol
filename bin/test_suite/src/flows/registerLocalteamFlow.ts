@@ -393,7 +393,7 @@ export async function runRegisterLocalteamFlow(
       await mockStadtlandzahlArea(page, newArs, newMunicipalityName);
       const initialText = await openRegisterPage(page, fixture.config.frontendUrl);
       assertIncludes(initialText, "Lokalteam gründen", "Register page must render the frontend entry point");
-      assertIncludes(initialText, "Suche nach einer Kommune", "Register page must expose municipality search");
+      assertIncludes(initialText, "Suche nach einer Gemeinde", "Register page must expose municipality search");
 
       const text = await openRegisterPage(page, fixture.config.frontendUrl, newArs, newMunicipalityName);
       assertIncludes(

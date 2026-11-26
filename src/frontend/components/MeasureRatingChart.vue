@@ -1,6 +1,6 @@
 <template>
   <div class="border-t-2 border-light-blue py-6">
-    <h2 class="mb-4 font-heading text-h3 font-bold text-gray">Bewertung durch Kommunen</h2>
+    <h2 class="mb-4 font-heading text-h3 font-bold text-gray">Bewertung durch Gemeinden</h2>
 
     <div v-if="!ratings || ratings.length === 0" class="text-sm text-gray-400 italic">
       Noch keine veröffentlichten Bewertungen für diese Maßnahme vorhanden.
@@ -62,7 +62,7 @@
       </div>
 
       <p class="mt-3 text-xs text-gray-400">
-        {{ total }} Kommune{{ total !== 1 ? "n haben" : " hat" }} diese Maßnahme bewertet.
+        {{ total }} Gemeinde{{ total !== 1 ? "n haben" : " hat" }} diese Maßnahme bewertet.
       </p>
     </div>
   </div>

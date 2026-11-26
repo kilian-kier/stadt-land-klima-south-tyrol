@@ -3,14 +3,14 @@
 export const seoMessages = {
   "de-DE": {
     "seo.data.area_description": "Klimadaten und Maßnahmen-Bewertungen für :name – entdecke Fortschritte und Handlungsmöglichkeiten für den kommunalen Klimaschutz.",
-    "seo.data.description": "Entdecke Klimadaten und Maßnahmen-Bewertungen für Kommunen und Regionen in Südtirol.",
+    "seo.data.description": "Entdecke Klimadaten und Maßnahmen-Bewertungen für Gemeinden und Regionen in Südtirol.",
     "seo.data.title": "Klimadaten für :name",
-    "seo.description": "Wie steht deine Kommune beim Klimaschutz da? Entdecke unabhängige Bewertungen, konkrete Maßnahmen, Klima-Wahlchecks und erfolgreiche Projekte bei Stadt.Land.Klima!",
+    "seo.description": "Wie steht deine Gemeinde beim Klimaschutz da? Entdecke unabhängige Bewertungen, konkrete Maßnahmen, Klima-Wahlchecks und erfolgreiche Projekte bei Stadt.Land.Klima!",
     "seo.events.description": "Entdecke Veranstaltungen, Workshops und Austausch rund um wirksamen kommunalen Klimaschutz.",
     "seo.image_alt": "Logo von Stadt.Land.Klima!",
     "seo.jobs.description": "Engagiere dich für wirksamen kommunalen Klimaschutz: offene Stellen und Möglichkeiten zur Mitarbeit bei Stadt.Land.Klima!",
     "seo.measures.description": "Entdecke konkrete Maßnahmen für wirksamen kommunalen Klimaschutz – mit Bewertungskriterien, Umsetzungshilfen und Beispielen aus der Praxis.",
-    "seo.municipalities.description": "Vergleiche den Klimaschutz deutscher Kommunen: unabhängige Bewertungen, umgesetzte Maßnahmen und Fortschritte auf dem Weg zur Klimaneutralität.",
+    "seo.municipalities.description": "Vergleiche den Klimaschutz deutscher Gemeinden: unabhängige Bewertungen, umgesetzte Maßnahmen und Fortschritte auf dem Weg zur Klimaneutralität.",
     "seo.municipality.description": "Wie steht :name beim Klimaschutz da? Entdecke die Bewertung, konkrete Maßnahmen und Fortschritte auf dem Weg zur Klimaneutralität.",
     "seo.news.description": "Neuigkeiten zum kommunalen Klimaschutz: aktuelle Bewertungen, erfolgreiche Projekte und Neues von Stadt.Land.Klima!",
     "seo.news.title": "Neuigkeiten",
@@ -21,9 +21,9 @@ export const seoMessages = {
     "seo.preview.industry": "Industrie & Wirtschaft",
     "seo.preview.management": "Klimaschutzmanagement",
     "seo.preview.transport": "Verkehr",
-    "seo.projects.description": "Lass dich von erfolgreichen Klimaschutzprojekten inspirieren und entdecke, wie Kommunen die Energiewende, Mobilitätswende und Klimaneutralität voranbringen.",
-    "seo.stats.description": "Entdecke Statistiken zum kommunalen Klimaschutz und vergleiche den Fortschritt deutscher Kommunen anhand ihrer Bewertungen.",
-    "seo.title": "Klimaschutz in deiner Kommune"
+    "seo.projects.description": "Lass dich von erfolgreichen Klimaschutzprojekten inspirieren und entdecke, wie Gemeinden die Energiewende, Mobilitätswende und Klimaneutralität voranbringen.",
+    "seo.stats.description": "Entdecke Statistiken zum kommunalen Klimaschutz und vergleiche den Fortschritt deutscher Gemeinden anhand ihrer Bewertungen.",
+    "seo.title": "Klimaschutz in deiner Gemeinde"
   },
   "en-GB": {
     "seo.data.area_description": "Climate data and assessments of climate measures for :name: explore progress and opportunities for municipal climate action.",

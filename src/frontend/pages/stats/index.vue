@@ -633,7 +633,7 @@
         </div>
         <!-- end tab: measures -->
 
-        <!-- TAB: Kommunen-Clustering -->
+        <!-- TAB: Gemeinde-Clustering -->
         <div v-show="activeTab === 'clustering'">
           <div class="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_320px]">
             <!-- Scatter plot -->
@@ -1888,7 +1888,7 @@ async function computeDominanceAndRender() {
 
     const data = filteredMunScores.value;
     if (data.length < 3) {
-      dominanceError.value = "Mindestens 3 Kommunen im aktuellen Filter benötigt.";
+      dominanceError.value = "Mindestens 3 Gemeinden im aktuellen Filter benötigt.";
       return;
     }
 
@@ -2222,11 +2222,11 @@ async function computeClusteringAndRender() {
   if (!clusterContainer.value) return;
   const data = filteredMunScores.value;
   if (!data.length) {
-    clusteringError.value = "Keine vollständig bewerteten Kommunen im aktuellen Filter.";
+    clusteringError.value = "Keine vollständig bewerteten Gemeinden im aktuellen Filter.";
     return;
   }
   if (data.length < kClusters.value + 1) {
-    clusteringError.value = `Zu wenige Kommunen (${data.length}) für k=${kClusters.value} Cluster.`;
+    clusteringError.value = `Zu wenige Gemeinden (${data.length}) für k=${kClusters.value} Cluster.`;
     return;
   }
 

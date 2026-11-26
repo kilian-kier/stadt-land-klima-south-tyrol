@@ -8,7 +8,7 @@
 
     <!-- Error -->
     <div v-else-if="error" class="px-4 py-8 text-center text-sm text-gray-400">
-      Für diese Kommune sind noch keine Daten vorhanden.
+      Für diese Gemeinde sind noch keine Daten vorhanden.
     </div>
 
     <template v-else>
@@ -31,7 +31,9 @@
         <!-- Histograms (all of them) -->
         <template v-if="histogramElements.length">
           <div v-for="hist in histogramElements" :key="hist.plot_id" class="min-h-[180px]">
-            <h4 class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">Verteilung (alle Kommunen)</h4>
+            <h4 class="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              Verteilung (alle Gemeinden)
+            </h4>
             <CollectionVegaChart
               :ars="ars"
               :element="hist"

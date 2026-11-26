@@ -118,7 +118,7 @@ test("measure rating bars count numeric and string ratings, not-applicable and u
     });
     assert.equal((html.match(/<button\b/g) ?? []).length, 7);
     assert.doesNotMatch(html, /<button[^>]*\bdisabled/);
-    assert.match(html, /7 Kommunen haben/);
+    assert.match(html, /7 Gemeinden haben/);
   }
 });
 
